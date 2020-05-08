@@ -37,4 +37,4 @@ def gatherIr(lat,lon):
     return globalIr,temp
 #
 #lat and lon as input, GlobalIr and Temp array as output of 2019
-gatherIr(51.998,4.373)
+GlobalIr, temp = gatherIr(51.998,4.373)
