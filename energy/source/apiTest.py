@@ -1,6 +1,8 @@
 import json
 import requests
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 from timezonefinder import TimezoneFinder
 
 
@@ -35,6 +37,34 @@ def gatherIr(lat,lon):
     globalIr = data.to_numpy()[:,2]+data.to_numpy()[:,3]
     temp = data.to_numpy()[:,4]
     return globalIr,temp
+
+
+"""An implementation of a solar energy model in Netherlands"""
+# size, angle(panel), irradiance, efficiency, temperature reliance
+import time
+import math
+import datetime
+
+
+# Power calculation with ambient temp as operating temp
+def power_out(length, width, efficiency, coefficient, irradiance, temperature):
+    p_nom = length * width * efficiency * irradiance
+    p_out = (((coefficient * (temperature-25))/100) * p_nom) + p_nom
+    return p_out
+
 #
 #lat and lon as input, GlobalIr and Temp array as output of 2019
-GlobalIr, temp = gatherIr(51.998,4.373)
+globalIr, temp = gatherIr(51.998,4.373)
+
+#Datasheet imported values
+lenght, width, efficiency, coefficient = 1.956, 0.992, 0.186, -0.39
+timehour = np.arange(0, temp.size)
+
+
+power = power_out(lenght,width,efficiency,coefficient,globalIr,temp)
+# plt.plot(timehour[0:24], power[0:24])
+# plt.xlabel("Time (hr)")
+# plt.ylabel("Power (W)")
+# plt.show()
+#
+
