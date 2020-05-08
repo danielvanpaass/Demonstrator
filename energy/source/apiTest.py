@@ -35,6 +35,6 @@ def gatherIr(lat,lon):
     globalIr = data.to_numpy()[:,2]+data.to_numpy()[:,3]
     temp = data.to_numpy()[:,4]
     return globalIr,temp
-
+#
 #lat and lon as input, GlobalIr and Temp array as output of 2019
 gatherIr(51.998,4.373)
