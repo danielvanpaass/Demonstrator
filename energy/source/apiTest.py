@@ -3,11 +3,10 @@ import requests
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from timezonefinder import TimezoneFinder
+# from timezonefinder import TimezoneFinder
 
-
+"""get API access to Irradiance and Temp of 2019, with input: location"""
 def gatherIr(lat,lon):
-    #getting API access to Irradiance and Temp
     api_base = 'https://www.renewables.ninja/api/'
     s = requests.session()
     s.headers = {'Authorization': 'Token 39046b41231860f99468167ba101617bcb782f05'}
@@ -39,29 +38,33 @@ def gatherIr(lat,lon):
     return globalIr,temp
 
 
-"""An implementation of a solar energy model in Netherlands"""
+#An implementation of a solar energy model in Netherlands
 # size, angle(panel), irradiance, efficiency, temperature reliance
-import time
-import math
-import datetime
+# import time
+# import math
+# import datetime
 
 
-# Power calculation with ambient temp as operating temp
+"""Power calculation solar panel with ambient temp as operating temp"""
 def power_out(length, width, efficiency, coefficient, irradiance, temperature):
     p_nom = length * width * efficiency * irradiance
     p_out = (((coefficient * (temperature-25))/100) * p_nom) + p_nom
     return p_out
 
-#
+
+
 #lat and lon as input, GlobalIr and Temp array as output of 2019
 globalIr, temp = gatherIr(51.998,4.373)
 
 #Datasheet imported values
 lenght, width, efficiency, coefficient = 1.956, 0.992, 0.186, -0.39
-timehour = np.arange(0, temp.size)
+# timehour = np.arange(0, temp.size)
 
-
+data = {} #empty dictionary
 power = power_out(lenght,width,efficiency,coefficient,globalIr,temp)
+data.update({'power':power.tolist()})
+data_out=json.dumps(data)
+#m_in=json.loads(m_decode) #decode json data
 # plt.plot(timehour[0:24], power[0:24])
 # plt.xlabel("Time (hr)")
 # plt.ylabel("Power (W)")
