@@ -1,0 +1,10 @@
+rename hostname of clients to anything but rasperrypi (only server should have that)
+-sudo nano /etc/hostname
+-sudo nano /etc/hosts
+sudo apt-get install python3-pip (on server and client)
+sudo pip3 install paho-mqtt (on server and client)
+For server only:
+-sudo apt install mosquitto
+-sudo systemctl enable mosquitto
+-sudo reboot
+
