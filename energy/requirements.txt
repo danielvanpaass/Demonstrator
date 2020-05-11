@@ -3,7 +3,7 @@ sudo apt-get install python3-pip
 sudo pip3 install paho-mqtt
 sudo sed -i 's/raspberrypi/raspberrypiClient/g' /etc/hostname #this changes hostname of clients
 sudo nano /etc/hosts
-#change localhost and raspberrypi to raspberrypiClient as follows:
+#change the word localhost and raspberrypi to raspberrypiClient as follows (leave the middle part as is):
 ##
 #127.0.0.1       raspberrypiClient
 #.. ... 
