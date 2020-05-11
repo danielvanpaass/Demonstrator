@@ -1,15 +1,13 @@
-For the client:
+#For the client: it runs off the same system so apply only for 1 client  
 sudo apt-get install python3-pip
 sudo pip3 install paho-mqtt
-sudo apt install mosquitto
-sudo systemctl enable mosquitto
 sudo sed -i 's/raspberrypi/raspberrypiClient/g' /etc/hostname #change hostname of clients
 sudo sed -i 's/localhost/raspberrypiClient/g' /etc/hosts #change hostname of clients
 sudo sed -i 's/raspberrypi/raspberrypiClient/g' /etc/hosts #change hostname of clients
 
-For the server:
+#For the server:
 sudo apt-get install python3-pip
 sudo pip3 install paho-mqtt
-sudo apt install mosquitto
+sudo apt install mosquitto #install broker
 sudo systemctl enable mosquitto
 sudo reboot
