@@ -1,7 +1,6 @@
 For the client:
 sudo apt-get install python3-pip
 sudo pip3 install paho-mqtt
-For server only:
 sudo apt install mosquitto
 sudo systemctl enable mosquitto
 sudo sed -i 's/raspberrypi/raspberrypiClient/g' /etc/hostname #change hostname of clients
