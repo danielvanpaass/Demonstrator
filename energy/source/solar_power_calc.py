@@ -75,7 +75,6 @@ def power_out_solar(N_panels):
     tot_power = power * N_panels
     tot_power = np.around(tot_power.astype(np.float), 3)  # rounding for reducing the message size
     data.update({'power': tot_power.tolist()})
-    data.update({'sth': tot_power.tolist()})
 
     return json.dumps(data)
 

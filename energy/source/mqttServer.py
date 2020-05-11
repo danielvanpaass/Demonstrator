@@ -1,6 +1,6 @@
 import paho.mqtt.client as mqtt
 import time
-from solar_power_calc import power_out_solar
+import json
 
 def on_connect(client, userdata, flags, rc):
     if rc==0:
@@ -12,13 +12,16 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, message):
     print("message received ", str(message.payload.decode("utf-8")))
     print("message topic=", message.topic)
+    m = message.payload.decode("utf-8")
+    with open('data.json', 'w', encoding='utf-8') as f:
+        json.dump(m, f, ensure_ascii=False, indent=4)
 
 def getMAC(interface='eth0'):
   # Return the MAC address used for client ID
   try:
     str = open('/sys/class/net/%s/address' %interface).read()
   except:
-    str = 'alias_for_getMACerror'
+    str = 'alias_server_notpi'
   return str[0:17]
 
 broker_address = "192.168.2.199" #server Pi address
@@ -34,16 +37,13 @@ client.on_message=on_message
 
 client.connect(broker_address)
 #in the loop, call back functions can be activated
-client.subscribe("demon/data")
 client.loop_start()
+client.subscribe("demon/data")
+#initial publish of power values
 
-while not client.connected_flag: #wait in loop
-     time.sleep(1)
-
+while True:
+    time.sleep(1)
 
 
 # client.publish("demon/data",power_out_solar(600))
-client.publish("demon/data","OFF")#publish
-time.sleep(3)
-client.loop_stop()    #Stop loop
-client.disconnect()
+# client.publish("demon/data","OFF")#publish

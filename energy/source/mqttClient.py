@@ -7,7 +7,6 @@ def on_connect(client, userdata, flags, rc):
     if rc==0:
         client.connected_flag=True #set flag
         print("connected OK Returned code=",rc)
-        client.subscribe("demon/data")
     else:
         print("Bad connection Returned code= ",rc)
 
@@ -26,7 +25,7 @@ def getMAC(interface='eth0'):
   try:
     str = open('/sys/class/net/%s/address' %interface).read()
   except:
-    str = 'alias_for_getMACerror'
+    str = 'alias_client_notpi'
   return str[0:17]
 
 broker_address = "192.168.2.199" #server Pi address
@@ -45,6 +44,7 @@ data_out = power_out_solar(N_solar)
 client.connect(broker_address)
 #in the loop, call back functions can be activated
 client.loop_start()
+client.subscribe("demon/data")
 #initial publish of power values
 client.publish("demon/data",data_out)
 while True:
