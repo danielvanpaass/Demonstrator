@@ -1,10 +1,16 @@
-rename hostname of clients to anything but rasperrypi (only server should have that)
--sudo nano /etc/hostname
--sudo nano /etc/hosts
-sudo apt-get install python3-pip (on server and client)
-sudo pip3 install paho-mqtt (on server and client)
+For the client:
+sudo apt-get install python3-pip
+sudo pip3 install paho-mqtt
 For server only:
--sudo apt install mosquitto
--sudo systemctl enable mosquitto
--sudo reboot
+sudo apt install mosquitto
+sudo systemctl enable mosquitto
+sudo sed -i 's/raspberrypi/raspberrypiClient/g' /etc/hostname #change hostname of clients
+sudo sed -i 's/localhost/raspberrypiClient/g' /etc/hosts #change hostname of clients
+sudo sed -i 's/raspberrypi/raspberrypiClient/g' /etc/hosts #change hostname of clients
 
+For the server:
+sudo apt-get install python3-pip
+sudo pip3 install paho-mqtt
+sudo apt install mosquitto
+sudo systemctl enable mosquitto
+sudo reboot
