@@ -28,7 +28,7 @@ def getMAC(interface='eth0'):
     return str[0:17]
 
 
-broker_address = "192.168.2.199"  # server Pi address
+broker_address = "raspberrypi"  # server Pi name (you can also use IP address here)
 # broker_address="test.mosquitto.org" #use external broker
 
 # instantiate client with MAC client ID for the session
