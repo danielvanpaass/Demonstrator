@@ -1,6 +1,10 @@
 import paho.mqtt.client as mqtt
 import time
 import json
+from Solartabtest import connect_and_run_dash
+from Solartabtest import dash_update_solar
+
+global data_out
 
 
 def on_connect(client, userdata, flags, rc):
@@ -12,11 +16,13 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, message):
-    print("message received ", str(message.payload.decode("utf-8")))
-    print("message topic=", message.topic)
     m = message.payload.decode("utf-8")
-    with open('data.json', 'w', encoding='utf-8') as f:
-        json.dump(m, f, ensure_ascii=False, indent=4)
+    print("message received ", str(m))
+    print("message topic=", message.topic)
+    dash_update_solar(json.loads(m))
+    # m = message.payload.decode("utf-8")
+    # with open('data.json', 'w', encoding='utf-8') as f:
+    #     json.dump(m, f, ensure_ascii=False, indent=4)
 
 
 def getMAC(interface='eth0'):
@@ -42,11 +48,10 @@ client.on_message = on_message
 client.connect(broker_address)
 # in the loop, call back functions can be activated
 client.loop_start()
-client.subscribe("demon/data")
+# client.subscribe("to_clients")
+client.subscribe("to_dash")
 # initial publish of power values
-
 while True:
-    time.sleep(1)
-
+    connect_and_run_dash(client)
 # client.publish("demon/data",power_out_solar(600))
 # client.publish("demon/data","OFF")#publish

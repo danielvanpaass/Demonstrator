@@ -13,14 +13,13 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, message):
-    global N_solar  # check if it really works with global
-    print("message received ", str(message.payload.decode("utf-8")))
+    m = json.loads(message.payload.decode("utf-8"))
+    print("message received ", str(m))
     print("message topic=", message.topic)
-    decoded = json.loads(message.payload.decode("utf-8"))
-    if decoded['N_solar'] != N_solar:
-        N_solar = decoded['N_solar']
-        client.publish("demon/data", power_out_solar(N_solar))
-    simu_hour = decoded['simu_hour']
+
+    N_solar = m['N_solar']
+    client.publish("to_dash", power_out_solar(N_solar))
+    # simu_hour = decoded['simu_hour']
     # pass simu_hour to HHUB
 
 
@@ -29,7 +28,7 @@ def getMAC(interface='eth0'):
     try:
         str = open('/sys/class/net/%s/address' % interface).read()
     except:
-        str = 'alias_client_notpi'
+        str = 'alias_client_notpis'
     return str[0:17]
 
 
@@ -43,15 +42,10 @@ client.connected_flag = False
 # bind call back functions
 client.on_connect = on_connect
 client.on_message = on_message
-# before connecting, calculate power flows with initial solar panel values
-N_solar = 20
-data_out = power_out_solar(N_solar)
 client.connect(broker_address)
 # in the loop, call back functions can be activated
 client.loop_start()
-client.subscribe("demon/data")
-# initial publish of power values
-client.publish("demon/data", data_out)
+client.subscribe("to_clients")
 while True:
     time.sleep(1)
 
