@@ -28,7 +28,9 @@ length, width, efficiency, coefficient = 1.956, 0.992, 0.186, -0.39
 # calculate power per solar panel
 global_ir = np.array(weather['irradiance_diffuse']) + np.array(weather['irradiance_direct'])
 temp = np.array(weather['temp'])
-power = power_calc(length, width, efficiency, coefficient, global_ir, temp)
+wind = np.array(weather['wind'])
+tcell = pvlib.temperature.sapm_cell(global_ir, temp, wind, **temp_params)
+power = power_calc(length, width, efficiency, coefficient, global_ir, tcell)
 # timehour = np.arange(0, temp.size)
 
 """Main function to be called in this file, for total power out in a year per hour"""
