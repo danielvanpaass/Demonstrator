@@ -8,10 +8,9 @@ import pvlib
 # choose good model params
 temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
 
-#get weather paramameters
+# get weather paramameters
 with open('weather.txt') as json_file:
     weather = json.load(json_file)
-
 
 """Power calculation solar panel with ambient temp as operating temp"""
 
@@ -31,7 +30,6 @@ temp = np.array(weather['temp'])
 wind = np.array(weather['wind'])
 tcell = pvlib.temperature.sapm_cell(global_ir, temp, wind, **temp_params)
 power = power_calc(length, width, efficiency, coefficient, global_ir, tcell)
-# timehour = np.arange(0, temp.size)
 
 """Main function to be called in this file, for total power out in a year per hour"""
 
@@ -43,10 +41,3 @@ def power_out_solar(N_panels):
     data.update({'power': tot_power.tolist()})
 
     return json.dumps(data)
-
-    # m_in=json.loads(m_decode) #decode json data
-    # plt.plot(timehour[0:24], power[0:24])
-    # plt.xlabel("Time (hr)")
-    # plt.ylabel("Power (W)")
-    # plt.show()
-    #
