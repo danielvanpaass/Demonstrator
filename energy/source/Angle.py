@@ -5,7 +5,8 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 year = 2019
-hour = pd.date_range(start=year, end='2020', freq='1h')
+#hour = pd.date_range(start=year, end='2020', freq='1h')
+hour = 13
 
 def solar_angle(latitude, longitude, year, hour):
     start_year = datetime.datetime(year, 1, 1, 0, 0, 0, 0)
@@ -15,35 +16,34 @@ def solar_angle(latitude, longitude, year, hour):
     # Determine the day of the year.
     day_of_year = utc_datetime.timetuple().tm_yday
 
-    declination = 23.45 * math.sin((360 / 365.0) * (day_of_year - 81))
+    declination = 23.45 * math.sin((360 / 365.0) * (day_of_year + 284))
 
     angle_of_day = (day_of_year - 81) * (360 / 365)
 
-    equation_of_time = (9.87 * math.sin(2 * angle_of_day)) - \
-                       (7.53 * math.cos(angle_of_day)) - (1.5 * math.sin(angle_of_day))
+    equation_of_time = (9.87 * math.sin(2 * angle_of_day)) - (7.53 * math.cos(angle_of_day)) - (1.5 * math.sin(angle_of_day))
 
     # True Solar Time
     solar_time = ((utc_datetime.hour * 60) + utc_datetime.minute +
-                  (4 * longitude) + equation_of_time) / 60.0
+                  (4 * longitude - 15 * (datetime.datetime.now() - datetime.datetime.utcnow()).seconds/3600) + equation_of_time) / 60.0
 
     # Angle between the local longitude and longitude where the sun is at
     # higher altitude
-    hour_angle = (15 * (12 - solar_time))
+    hour_angle = (15 * (solar_time - 12))
 
-    # Altitude Position of the Sun in Radians
+    # Altitude Position of the Sun in degrees
     altitude = math.asin(math.cos(latitude) * math.cos(declination) * math.cos(hour_angle) +
                          math.sin(latitude) * math.sin(declination))
 
-    # Azimuth Position fo the sun in radians
-    azimuth = math.asin(
-              math.cos(declination) * math.sin(hour_angle) / math.cos(altitude))
+    # Azimuth Position of the sun in degrees
+    azimuth = math.acos(
+        (math.sin(declination) * math.cos(latitude) - math.cos(declination) * math.sin(latitude) * math.cos(hour_angle))/math.cos(altitude))
 
     # I don't really know what this code does, it has been imported from
     # PySolar
-    if (math.cos(hour_angle) >= (math.tan(declination) / math.tan(latitude))):
-         altitude, azimuth
+    if math.cos(hour_angle) >= (math.tan(declination) / math.tan(latitude)):
+         azimuth = azimuth
     else:
-         altitude, 180 - azimuth
+         azimuth = (180 - azimuth)
     return altitude, azimuth
 
 latitude_deg = 52.0
