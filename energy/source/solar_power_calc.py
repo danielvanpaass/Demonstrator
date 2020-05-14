@@ -62,3 +62,8 @@ def power_out_solar(N_panels, tilt_panel):
     data.update({'power': tot_power.tolist()})
 
     return json.dumps(data)
+if __name__ == '__main__':
+    power_out_solar(2, 30)
+    power_out_solar(2, 40)
+    power_out_solar(1, 50)#should throw exception
+
