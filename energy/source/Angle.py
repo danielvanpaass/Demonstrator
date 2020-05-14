@@ -1,5 +1,13 @@
 #Angle to sun calculation, azimuth TEST
-def solar_angle(latitude_deg, longitude_deg, year, hour):
+import pandas as pd
+import math
+import datetime
+import numpy as np
+import matplotlib.pyplot as plt
+year = 2019
+hour = pd.date_range(start=year, end='2020', freq='1h')
+
+def solar_angle(latitude, longitude, year, hour):
     start_year = datetime.datetime(year, 1, 1, 0, 0, 0, 0)
     utc_datetime = start_year + datetime.timedelta(hours=hour)
 
@@ -16,30 +24,36 @@ def solar_angle(latitude_deg, longitude_deg, year, hour):
 
     # True Solar Time
     solar_time = ((utc_datetime.hour * 60) + utc_datetime.minute +
-                  (4 * longitude_deg) + equation_of_time) / 60.0
+                  (4 * longitude) + equation_of_time) / 60.0
 
     # Angle between the local longitude and longitude where the sun is at
     # higher altitude
     hour_angle = (15 * (12 - solar_time))
 
     # Altitude Position of the Sun in Radians
-    altitude = math.asin(math.cos(latitude_deg) * math.cos(declination) * math.cos(hour_angle) +
-                         math.sin(latitude_deg) * math.sin(declination))
+    altitude = math.asin(math.cos(latitude) * math.cos(declination) * math.cos(hour_angle) +
+                         math.sin(latitude) * math.sin(declination))
 
     # Azimuth Position fo the sun in radians
-    azimuth_deg = math.asin(
-        math.cos(declination) * math.sin(hour_angle) / math.cos(altitude))
+    azimuth = math.asin(
+              math.cos(declination) * math.sin(hour_angle) / math.cos(altitude))
 
     # I don't really know what this code does, it has been imported from
     # PySolar
-    # if (math.cos(hour_angle_rad) >= (math.tan(declination_rad) / math.tan(latitude_rad))):
-    #  return math.degrees(altitude_rad), math.degrees(azimuth_rad)
-    # else:
-    #   return math.degrees(altitude_rad), (180 - math.degrees(azimuth_rad))
-    return azimuth_deg
+    if (math.cos(hour_angle) >= (math.tan(declination) / math.tan(latitude))):
+         altitude, azimuth
+    else:
+         altitude, 180 - azimuth
+    return altitude, azimuth
 
 latitude_deg = 52.0
 longitude_deg = 4.3571
 
-angle = solar_angle(52.0,4.3571,2020,720)
-print("Azimuth angle:",angle)
+numhours = 8760
+
+
+alt, azi = solar_angle(52.0, 4.3571, 2019, hour)
+print("Azimuth angle:",azi)
+print("Altitude angle", alt)
+plt.plot(hour, azi)
+plt.show()
