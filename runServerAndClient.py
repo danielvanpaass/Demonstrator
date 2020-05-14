@@ -1,5 +1,5 @@
 from Client import mqttClient
 from Server import mqttServer
 
-mqttClient
-mqttServer
+mqttClient.start_client()
+mqttServer.start_server()
