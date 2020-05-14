@@ -1,0 +1,5 @@
+pvlib
+numpy
+paho-mqtt
+pandas
+smbus
