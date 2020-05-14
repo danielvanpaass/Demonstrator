@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 import time
 import json
-from solar_power_calc import power_out_solar
+from power_calc import power_out_solar
 
 
 def on_connect(client, userdata, flags, rc):
@@ -18,7 +18,7 @@ def on_message(client, userdata, message):
     print("message topic=", message.topic)
 
     N_solar = m['N_solar']
-    client.publish("to_dash", power_out_solar(N_solar))
+    client.publish("to_dash", power_out_solar(N_solar, tilt_panel=30))
     # simu_hour = decoded['simu_hour']
     # pass simu_hour to HHUB
 
