@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 import time
 import json
-from solar_power_calc import power_out_solar
+from power_calc import power_out_solar
 
 
 def on_connect(client, userdata, flags, rc):
