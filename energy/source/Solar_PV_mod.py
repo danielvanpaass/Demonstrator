@@ -1,4 +1,4 @@
-"""An implementation of a solar energy model in Netherlands"""
+"""An implementation of a solar energy model"""
 # size, angle(panel), irradiance, efficiency, temperature reliance
 import time
 import math
@@ -22,7 +22,3 @@ temperature = np.array([27, 25, 26, 25])
 timehour = np.array([0, 1, 2, 3])
 
 power = power_out(lenght, width, efficiency, coefficient, irradiance, temperature)
-pl.plot(timehour, power)
-pl.xlabel("Time (hr)")
-pl.ylabel("Power (W)")
-pl.show()
