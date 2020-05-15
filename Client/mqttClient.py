@@ -1,10 +1,7 @@
 import paho.mqtt.client as mqtt
 import time
 import json
-from Solartabtest import connect_and_run_dash
-from Solartabtest import dash_update_solar
-
-global data_out
+from Client import power_calc
 
 
 def on_connect(client, userdata, flags, rc):
@@ -14,27 +11,25 @@ def on_connect(client, userdata, flags, rc):
     else:
         print("Bad connection Returned code= ", rc)
 
-
 def on_message(client, userdata, message):
-    m = message.payload.decode("utf-8")
+    m = json.loads(message.payload.decode("utf-8"))
     print("message received ", str(m))
     print("message topic=", message.topic)
-    dash_update_solar(json.loads(m))
-    # m = message.payload.decode("utf-8")
-    # with open('data.json', 'w', encoding='utf-8') as f:
-    #     json.dump(m, f, ensure_ascii=False, indent=4)
 
+    N_solar = m['N_solar']
+    client.publish("to_dash", power_calc.power_out_solar(N_solar, tilt_panel=30))
+    # simu_hour = decoded['simu_hour']
+    # pass simu_hour to HHUB
 
 def getMAC(interface='eth0'):
     # Return the MAC address used for client ID
     try:
         str = open('/sys/class/net/%s/address' % interface).read()
     except:
-        str = 'alias_server_notpi'
+        str = 'alias_client_notpis'
     return str[0:17]
 
-
-broker_address = "raspberrypi"  # server Pi name (you can also use IP address here)
+broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
 # broker_address="test.mosquitto.org" #use external broker
 
 # instantiate client with MAC client ID for the session
@@ -44,14 +39,12 @@ client.connected_flag = False
 # bind call back functions
 client.on_connect = on_connect
 client.on_message = on_message
-
 client.connect(broker_address)
 # in the loop, call back functions can be activated
 client.loop_start()
-# client.subscribe("to_clients")
-client.subscribe("to_dash")
-# initial publish of power values
+client.subscribe("to_clients")
 while True:
-    connect_and_run_dash(client)
+    time.sleep(1)
+
 # client.publish("demon/data",power_out_solar(600))
 # client.publish("demon/data","OFF")#publish

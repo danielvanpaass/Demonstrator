@@ -1,9 +1,9 @@
-import paho.mqtt.client as mqtt
-import time
 import json
-from power_calc import power_out_solar
 
+import paho.mqtt.client as mqtt
+from Server import Solartabtest
 
+global data_out
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         client.connected_flag = True  # set flag
@@ -13,14 +13,13 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, message):
-    m = json.loads(message.payload.decode("utf-8"))
+    m = message.payload.decode("utf-8")
     print("message received ", str(m))
     print("message topic=", message.topic)
-
-    N_solar = m['N_solar']
-    client.publish("to_dash", power_out_solar(N_solar, tilt_panel=30))
-    # simu_hour = decoded['simu_hour']
-    # pass simu_hour to HHUB
+    Solartabtest.dash_update_solar(json.loads(m))
+    # m = message.payload.decode("utf-8")
+    # with open('data.json', 'w', encoding='utf-8') as f:
+    #     json.dump(m, f, ensure_ascii=False, indent=4)
 
 
 def getMAC(interface='eth0'):
@@ -28,11 +27,11 @@ def getMAC(interface='eth0'):
     try:
         str = open('/sys/class/net/%s/address' % interface).read()
     except:
-        str = 'alias_client_notpis'
+        str = 'alias_server_notpi'
     return str[0:17]
 
 
-broker_address = "raspberrypi"  # server Pi name
+broker_address = "raspberrypi"  # server Pi name (you can also use IP address here)
 # broker_address="test.mosquitto.org" #use external broker
 
 # instantiate client with MAC client ID for the session
@@ -42,12 +41,14 @@ client.connected_flag = False
 # bind call back functions
 client.on_connect = on_connect
 client.on_message = on_message
+
 client.connect(broker_address)
 # in the loop, call back functions can be activated
 client.loop_start()
-client.subscribe("to_clients")
+# client.subscribe("to_clients")
+client.subscribe("to_dash")
+# initial publish of power values
 while True:
-    time.sleep(1)
-
+    Solartabtest.connect_and_run_dash(client)
 # client.publish("demon/data",power_out_solar(600))
 # client.publish("demon/data","OFF")#publish
