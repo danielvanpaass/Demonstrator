@@ -11,7 +11,7 @@ from dash.dependencies import Input, Output, State
 import dash_html_components as html
 import dash_core_components as dcc
 import base64
-
+data_change = False
 data = {}
 dh = {'power': [1, 2, 3]}
 dh.update({'time': pd.date_range(start='2019-01-01 00:00', freq='1h', periods=8760)})
@@ -49,17 +49,19 @@ app.layout = html.Div([
 
 
 def dash_update_solar(dict):
-    global dh
+    global dh, data_change
     dh.update(dict)
-
-    print(dh)
+    data_change = True
 
 @app.callback(Output('pvpower', 'figure'),
               [Input('button', 'n_clicks')],
                 state=[State('input', 'value'),
                ],)
 def update_graph_live(n, z):
-    time.sleep(0.5)
+    global data_change
+    while(data_change == False):
+        pass
+    data_change = False
     figure = {
         'data': [
             {'x': dh['time'], 'y': dh['power'], 'type': 'line', 'name': 'SF'}
@@ -85,4 +87,4 @@ def connect_and_run_dash(client):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
