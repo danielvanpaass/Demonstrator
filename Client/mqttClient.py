@@ -29,8 +29,8 @@ def getMAC(interface='eth0'):
         str = 'alias_client_notpis'
     return str[0:17]
 
-broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
-# broker_address="test.mosquitto.org" #use external broker
+#broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
+broker_address="test.mosquitto.org" #use external broker
 
 # instantiate client with MAC client ID for the session
 client = mqtt.Client(getMAC('eth0'))
