@@ -24,7 +24,7 @@ temp = np.array(solar40['temp'])
 # get load
 with open('load.txt') as json_file:
     load = json.load(json_file)
-load = np.array(load['load'])
+load = np.array(load['power_load'])
 
 """Power calculation solar panel with ambient temp as operating temp"""
 
