@@ -15,9 +15,10 @@ def on_message(client, userdata, message):
     m = json.loads(message.payload.decode("utf-8"))
     print("message received ", str(m))
     print("message topic=", message.topic)
-
+    tilt_panel = m['tilt_panel']
     N_solar = m['N_solar']
-    client.publish("to_dash", power_calc.power_out_solar(N_solar, tilt_panel=30))
+    N_load = m['N_load']
+    client.publish("to_dash", power_calc.power_out_solar(N_solar, tilt_panel, N_load))
     # simu_hour = decoded['simu_hour']
     # pass simu_hour to HHUB
 
