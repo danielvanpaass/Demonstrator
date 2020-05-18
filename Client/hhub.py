@@ -1,7 +1,11 @@
 import enum
-import smbus
+from time import sleep
 
 from Client import __USEPINS__
+
+if __USEPINS__ == True:
+	import smbus
+	import RPi.GPIO as GPIO
 
 # Enumeration class for the types of models
 class Model(enum.IntEnum):
@@ -12,12 +16,21 @@ class Model(enum.IntEnum):
 # I2C channel 1 is connected to the GPIO pins
 channel = 1
 
-# Initialize I2C (SMBus)
 if __USEPINS__ == True:
+	# Initialize I2C (SMBus)
 	bus = smbus.SMBus(channel)
+	
+	# Choose BCM or BOARD for demux
+	GPIO.setmode(GPIO.BCM)
+	GPIO.setup(DEMUX_PIN_1, GPIO.OUT)
+	GPIO.setup(DEMUX_PIN_2, GPIO.OUT)
+
+# Demux GPIO pins
+DEMUX_PIN_1 = 17 # In wiringpi 0. Is BCM 17, and physical 11
+DEMUX_PIN_2 = 13 # In wiringpi 2. Is BCM 13, and physical 27
 
 # Base I2C address of the chips used
-base_address = 0x38
+base_address = 0x20
 
 # Bits used for the DAC and ADC
 BITS_DAC = 8
@@ -39,7 +52,7 @@ def setModel(power, model, power_min, power_max):
 	if __USEPINS__ == True:
 		return bus.write_byte(address, dac_value)
 	else:
-		print("Trying to write via GPIO pins, but __USEPINS__ is set to False")
+		print("Trying to write via I2C pins, but __USEPINS__ is set to False")
 		print("Writing value ", dac_value, " to address ", hex(address))  
 		return None
 
@@ -51,9 +64,27 @@ def getModel(model, power_min, power_max):
 		adc_value = bus.read_byte(address)
 	else:
 		adc_value = ADC_MAX
-		print("Trying to read via GPIO pins, but __USEPINS__ is set to False")
+		print("Trying to read via I2C pins, but __USEPINS__ is set to False")
 		print("Storing ", adc_value, " in adc_value as dummy from address ", hex(address))
 		
 	return (power_max - power_min) / ADC_MAX * adc_value + power_min
 
-# def getConnected():
+
+def _read_i2c():
+	for model in range(4):
+		try:
+			bus.read_byte(base_address + 2 * model)
+			print(hex(model))
+		except: # exception if read_byte fails
+			pass
+
+def getConnected(demux_settle_time):
+	if __USEPINS__ == True:
+		for pin1 in [0,1]:
+			for pin2 in [0,1]:
+				GPIO.output(DEMUX_PIN_1,pin1)
+				GPIO.output(DEMUX_PIN_2,pin2)
+				sleep(demux_settle_time)
+				_read_i2c()
+	else:
+		print("Trying to detect I2C devices, but __USEPINS__ is set to False")

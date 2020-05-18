@@ -3,3 +3,4 @@ numpy
 paho-mqtt
 pandas
 smbus
+RPi.GPIO
