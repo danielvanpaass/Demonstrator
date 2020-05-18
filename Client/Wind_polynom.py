@@ -29,9 +29,9 @@ def power_calc_wind(wind_speed, **windturbine_params):
         if wind_speed[x]<windturbine_params['cut_inspeed'] or wind_speed[x]>windturbine_params['cut_outspeed']:
             wind_power[x] = 0
 
-    #for x in range(0, len(wind_speed)):
-     #   if wind_power[x]>windturbine_params['P_rated']:
-       #     wind_power[x] = windturbine_params['P_rated']
+    for x in range(0, len(wind_speed)):
+       if wind_power[x]>windturbine_params['P_rated']:
+           wind_power[x] = windturbine_params['P_rated']
 
     return wind_power.tolist()
 
