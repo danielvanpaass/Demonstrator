@@ -37,7 +37,7 @@ def setModel(power, model, power_min, power_max):
 	address = base_address + (model - 1) * 2
 	
 	if __USEPINS__ == True:
-		return smbus.write_byte(address, dac_value)
+		return bus.write_byte(address, dac_value)
 	else:
 		print("Trying to write via GPIO pins, but __USEPINS__ is set to False")
 		print("Writing value ", dac_value, " to address ", hex(address))  
@@ -48,7 +48,7 @@ def getModel(model, power_min, power_max):
 	address = base_address + (model - 1) * 2 + 1
 	
 	if __USEPINS__ == True:
-		adc_value = smbus.read_byte(address)
+		adc_value = bus.read_byte(address)
 	else:
 		adc_value = ADC_MAX
 		print("Trying to read via GPIO pins, but __USEPINS__ is set to False")
