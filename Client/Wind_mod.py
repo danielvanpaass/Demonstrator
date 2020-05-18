@@ -25,23 +25,28 @@ windturbine_params = WIND_PARAMETERS[type_turbine]
 # Coefficient power = (1 + lambda) * (1 - (lambda)^2)/2, max = 0.59, lambda = tsr
 def power_calc_wind(wind_speed, temperature, **windturbine_params):
     # angular velocity of turbine is related to tip speed ratio to determine efficiency
-    omega_turbine = wind_speed
+    #omega_turbine = wind_speed
 
-    blade_tip_speed = (omega_turbine * windturbine_params['diameter'] / 2) / wind_speed
-
-    tsr = blade_tip_speed / wind_speed
+    #blade_tip_speed = (omega_turbine * windturbine_params['diameter'] / 2) / wind_speed
+    blade_tip_speed = 80
+    wind_speed_np = np.array(wind_speed)
+    tsr = blade_tip_speed / wind_speed_np
 
     # R_g (gas constant dry air = 287.058), pressure at sea level
     pressure = 101325
+    temperature = np.array(temperature)
     rho = pressure / (287.058 * (temperature + 273.15))
 
     efficiency = ((1 + tsr) * (1 - (tsr ** 2)) / 2)
 
     area = ((windturbine_params['diameter']) ** 2 / 4) * math.pi
 
-    wind_power = 0.5 * rho * area * wind_speed ** 3 * efficiency
+    wind_power = 0.5 * rho * area * wind_speed_np ** 3 * efficiency
+    for x in range(0, len(wind_speed)):
+        if wind_speed[x]<windturbine_params['cut_inspeed'] or wind_speed[x]>windturbine_params['cut_outspeed']:
+            wind_power[x] = 0
 
-    return wind_power, efficiency
+    return wind_power.tolist(), efficiency.tolist()
 
 
 #bln = (wind >= windturbine_params['cut_inspeed']).any() and (wind <= windturbine_params['cut_outspeed']).any()
