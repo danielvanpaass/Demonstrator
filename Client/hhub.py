@@ -41,7 +41,7 @@ def setModel(power, model, power_min, power_max):
 	else:
 		print("Trying to write via GPIO pins, but __USEPINS__ is set to False")
 		print("Writing value ", dac_value, " to address ", hex(address))  
-		return None
+		return 0
 
 # Use this function to get a value for the table-top model sensors
 def getModel(model, power_min, power_max):
