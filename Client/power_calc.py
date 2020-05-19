@@ -2,7 +2,7 @@ import json
 import pandas as pd
 import numpy as np
 import pvlib
-from Client import *
+#import *
 
 # choose good model params
 temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']

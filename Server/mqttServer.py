@@ -1,7 +1,7 @@
 import json
 
 import paho.mqtt.client as mqtt
-from Server import Solartabtest
+import Solartabtest
 
 global data_out
 def on_connect(client, userdata, flags, rc):
