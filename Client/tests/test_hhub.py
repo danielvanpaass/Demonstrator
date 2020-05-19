@@ -11,8 +11,7 @@ print("test_hhub.py: __USEPINS__ is set to ", __USEPINS__)
 print("__________________________________________")
 
 # Try to detect I2C devices
-print("hhub.getConnected")
-hhub.getConnected()
+print("hhub.getConnected returns ", hhub.getConnected(1))
 
 # Try to set value for solarpv
 print("hhub.setModel returns ", hhub.setModel(2e6, hhub.Model.SOLARPV, 0e6, 6e6))

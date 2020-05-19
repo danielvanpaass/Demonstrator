@@ -72,10 +72,13 @@ def getModel(model, power_min, power_max):
 
 def _read_i2c(pin1,pin2):
 	id_address_table = []
-	for address in range(0,8,2):
+	for sub_address in range(0,8,2):
+		address = base_address + sub_address
 		try:
-			byte = bus.read_byte(base_address + address)
-			id_address_table.append([])
+			byte = uint8(bus.read_byte(base_address + sub_address))
+			byte = 0x6E
+			id = (byte & 0x0F)
+			id_address_table.append([id,address,pin1,pin2])
 		except: # exception if read_byte fails
 			pass
 	return id_address_table
@@ -88,7 +91,7 @@ def getConnected(demux_settle_time):
 				GPIO.output(DEMUX_PIN_1,pin1)
 				GPIO.output(DEMUX_PIN_2,pin2)
 				sleep(demux_settle_time)
-				id_address_table.append(_read_i2c(pin1,pin2))
+				id_address_table.extend(_read_i2c(pin1,pin2))
 	else:
 		print("Trying to detect I2C devices, but __USEPINS__ is set to False")
 	return id_address_table
