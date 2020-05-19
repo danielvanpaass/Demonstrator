@@ -9,7 +9,6 @@ import dash_html_components as html
 import dash_core_components as dcc
 import base64
 
-data_change = False
 data = {}
 dh = {'power_solar': [1, 2, 3]}
 dh.update({'time': pd.date_range(start='2019-01-01 00:00', freq='1h', periods=8760)})
@@ -59,9 +58,8 @@ app.layout = html.Div(children=[
 
 
 def dash_update_solar(dict):
-    global dh, data_change
+    global dh
     dh.update(dict)
-    data_change = True
 
 
 @app.callback(Output('pvpower', 'figure'),
@@ -70,10 +68,7 @@ def dash_update_solar(dict):
                      State('dropdown', 'value')
                      ])
 def update_graph_live(n, z, k):
-    global data_change
-    while (data_change == False):
-        pass
-    data_change = False
+    time.sleep(0.5)
     figure = {
         'data': [
             {'x': dh['time'], 'y': dh['power_solar'], 'type': 'line', 'name': 'PV'}
@@ -90,10 +85,7 @@ def update_graph_live(n, z, k):
               state=[State('input load', 'value')
                      ])
 def update_graph_live_load(n, z, ):
-    global data_change
-    while (data_change == False):
-        pass
-    data_change = False
+    time.sleep(0.5)
     figure = {
         'data': [
             {'x': dh['time'], 'y': dh['power_load'], 'type': 'line', 'name': 'load'}
