@@ -23,11 +23,6 @@ DEMUX_PIN_2 = 13 # In wiringpi 2. Is BCM 13, and physical 27
 if __USEPINS__ == True:
 	# Initialize I2C (SMBus)
 	bus = smbus.SMBus(channel)
-	
-	# Choose BCM or BOARD for demux
-	GPIO.setmode(GPIO.BCM)
-	GPIO.setup(DEMUX_PIN_1, GPIO.OUT)
-	GPIO.setup(DEMUX_PIN_2, GPIO.OUT)
 
 # Base I2C address of the chips used
 base_address = 0x20
@@ -74,8 +69,7 @@ def _read_i2c(pin1,pin2):
 	for sub_address in range(0,8,2):
 		address = base_address + sub_address
 		try:
-			byte = uint8(bus.read_byte(base_address + sub_address))
-			byte = 0x6E
+			byte = bus.read_byte(address)
 			id = (byte & 0x0F)
 			id_address_table.append([id,address,pin1,pin2])
 		except: # exception if read_byte fails
@@ -85,12 +79,17 @@ def _read_i2c(pin1,pin2):
 def getConnected(demux_settle_time):
 	id_address_table = []
 	if __USEPINS__ == True:
+		# Choose BCM or BOARD for demux
+		GPIO.setmode(GPIO.BCM)
+		GPIO.setup(DEMUX_PIN_1, GPIO.OUT)
+		GPIO.setup(DEMUX_PIN_2, GPIO.OUT)
 		for pin1 in [0,1]:
 			for pin2 in [0,1]:
 				GPIO.output(DEMUX_PIN_1,pin1)
 				GPIO.output(DEMUX_PIN_2,pin2)
 				sleep(demux_settle_time)
 				id_address_table.extend(_read_i2c(pin1,pin2))
+		GPIO.cleanup()
 	else:
 		print("Trying to detect I2C devices, but __USEPINS__ is set to False")
 	return id_address_table
