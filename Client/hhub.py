@@ -16,6 +16,10 @@ class Model(enum.IntEnum):
 # I2C channel 1 is connected to the GPIO pins
 channel = 1
 
+# Demux GPIO pins
+DEMUX_PIN_1 = 17 # In wiringpi 0. Is BCM 17, and physical 11
+DEMUX_PIN_2 = 13 # In wiringpi 2. Is BCM 13, and physical 27
+
 if __USEPINS__ == True:
 	# Initialize I2C (SMBus)
 	bus = smbus.SMBus(channel)
@@ -24,10 +28,6 @@ if __USEPINS__ == True:
 	GPIO.setmode(GPIO.BCM)
 	GPIO.setup(DEMUX_PIN_1, GPIO.OUT)
 	GPIO.setup(DEMUX_PIN_2, GPIO.OUT)
-
-# Demux GPIO pins
-DEMUX_PIN_1 = 17 # In wiringpi 0. Is BCM 17, and physical 11
-DEMUX_PIN_2 = 13 # In wiringpi 2. Is BCM 13, and physical 27
 
 # Base I2C address of the chips used
 base_address = 0x20
@@ -68,7 +68,6 @@ def getModel(model, power_min, power_max):
 		print("Storing ", adc_value, " in adc_value as dummy from address ", hex(address))
 		
 	return (power_max - power_min) / ADC_MAX * adc_value + power_min
-
 
 def _read_i2c(pin1,pin2):
 	id_address_table = []
