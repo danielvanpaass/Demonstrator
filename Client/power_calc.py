@@ -2,7 +2,6 @@ import json
 import pandas as pd
 import numpy as np
 import pvlib
-from Client import *
 
 # choose good model params
 temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
@@ -79,4 +78,3 @@ def power_out_solar(N_panels, tilt_panel, N_load, type_load):
 if __name__ == '__main__':
     print(power_out_solar(2, 30))
     print(power_out_solar(2, 40))
-    # power_out_solar(1, 50)  # should throw exception

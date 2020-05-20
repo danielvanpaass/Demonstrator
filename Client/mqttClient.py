@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 import time
 import json
-from Client import power_calc
+import power_calc
 
 
 def on_connect(client, userdata, flags, rc):
@@ -34,8 +34,9 @@ def getMAC(interface='eth0'):
     return str[0:17]
 
 
-broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
-# broker_address="test.mosquitto.org" #use external broker
+#broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
+#broker_address="test.mosquitto.org" #use external broker
+broker_address="mqtt.eclipse.org" #use external broker
 
 # instantiate client with MAC client ID for the session
 client = mqtt.Client(getMAC('eth0'))
