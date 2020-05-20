@@ -1,4 +1,9 @@
+from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+
 
 data = {'pv':[1,4,1,2,4,2],
          'wind':[1,2,5,3,2,0],
@@ -22,21 +27,21 @@ share1=[tot_fluor,tot_nitrous,tot_methane,tot_carbon]
 
 labels2=['PV','Wind','Natural Gas','Coal','Oil','Nuclear','Other']
 share2=[tot_pv,tot_wind,tot_gas,tot_coal,tot_oil,tot_nuclear,tot_other]
-fig1 = go.Figure(go.Bar(
-            x=share1,
-            y=labels1,
-            orientation='h'))
 
-#fig2 = go.Figure([go.Bar(x=labels2, y=share2)])
-fig2 = go.Figure(data=[
-    go.Bar(name='Carbon dioxide', x=labels2, y=share2),
-    go.Bar(name='Methane', x=labels2, y=share2),
-    go.Bar(name='Nitrous oxide', x=labels2, y=share2),
-    go.Bar(name='Fluorinated gases', x=labels2, y=share2),
+fig = make_subplots(rows=1, cols=2, specs=[[{"type": "bar"}, {"type": "bar"}]])
 
-])
-# Change the bar mode
-fig2.update_layout(barmode='stack')
-#fig.show()
-#fig2.show()
-fig1.show()
+
+fig.add_trace(go.Bar(name='Greenhouse gases',
+     x=labels1,y=share1,
+),
+     row=1, col=1)
+
+fig.add_trace(go.Bar(name='Lifecycle emissions per source',
+     x=labels2, y=share2,
+),
+    row=1, col=2)
+
+fig.update_layout(
+    title_text="Global Emissions 1990-2011")
+
+fig.show()
