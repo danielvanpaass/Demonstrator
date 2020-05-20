@@ -1,7 +1,8 @@
 import json
 
 import paho.mqtt.client as mqtt
-import maindash
+
+from Server import maindash
 
 global data_out
 def on_connect(client, userdata, flags, rc):

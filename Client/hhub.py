@@ -1,7 +1,9 @@
 import enum
+
 import smbus
 
 from Client import __USEPINS__
+
 
 # Enumeration class for the types of models
 class Model(enum.IntEnum):

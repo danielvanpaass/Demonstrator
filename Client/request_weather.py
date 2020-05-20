@@ -1,6 +1,7 @@
-import requests
-import pandas as pd
 import json
+
+import pandas as pd
+import requests
 
 """get API access to Irradiance and Temp of 2019, with input: location"""
 

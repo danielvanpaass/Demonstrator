@@ -1,7 +1,9 @@
-import paho.mqtt.client as mqtt
-import time
 import json
-import power_calc
+import time
+
+import paho.mqtt.client as mqtt
+
+from Client import power_calc
 
 
 def on_connect(client, userdata, flags, rc):

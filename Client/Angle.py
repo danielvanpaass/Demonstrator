@@ -1,9 +1,9 @@
 # Angle to sun calculation, azimuth TEST
-import pandas as pd
-import math
 import datetime
-import numpy as np
+import math
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 year = 2019
 # hour = pd.date_range(start=year, end='2020', freq='1h')

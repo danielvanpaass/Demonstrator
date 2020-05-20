@@ -1,5 +1,6 @@
 "An implementation of a wind energy model for a wind turbine"
 import math
+
 import matplotlib.pyplot as plt
 import numpy as np
 
