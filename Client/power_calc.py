@@ -24,7 +24,8 @@ temp = np.array(solar40['temp'])
 # get load
 with open('load.txt') as json_file:
     load = json.load(json_file)
-load = np.array(load['power_load'])
+load_saving = np.array(load['load_saving'])
+load_average = np.array(load['load_average'])
 
 """Power calculation solar panel with ambient temp as operating temp"""
 
@@ -49,7 +50,7 @@ solpower40 = power_calc_solar(length, width, efficiency, coefficient, global_ir_
 """Main function to be called in this file, for total power out in a year per hour"""
 
 
-def power_out_solar(N_panels, tilt_panel, N_load):
+def power_out_solar(N_panels, tilt_panel, N_load, type_load):
     data = {}  # empty dictionary
     if tilt_panel == 30:
         solpower = solpower30
@@ -61,11 +62,16 @@ def power_out_solar(N_panels, tilt_panel, N_load):
         raise ValueError('tilt not defined')
     tot_solpower = solpower * N_panels
     tot_solpower = np.around(tot_solpower.astype(np.float), 3)  # rounding for reducing the message size
-    tot_load=load*N_load
-    tot_load= np.around(tot_load.astype(np.float), 3)
+    if type_load == "saving":
+        load = load_saving
+    elif type_load == "average":
+        load = load_average
+    else:
+        raise ValueError('load_type not defined')
+    tot_load = load * N_load
+    tot_load = np.around(tot_load.astype(np.float), 3)
     data.update({'power_solar': tot_solpower.tolist()})
-    data.update({'power_load':tot_load.tolist()})
-
+    data.update({'power_load': tot_load.tolist()})
 
     return json.dumps(data)
 
@@ -73,4 +79,4 @@ def power_out_solar(N_panels, tilt_panel, N_load):
 if __name__ == '__main__':
     print(power_out_solar(2, 30))
     print(power_out_solar(2, 40))
-    #power_out_solar(1, 50)  # should throw exception
+    # power_out_solar(1, 50)  # should throw exception

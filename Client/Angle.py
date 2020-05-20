@@ -78,7 +78,7 @@ self = np.arange(0,25)
 latitude_deg = 52.0
 longitude_deg = 4.3571
 #for self in range(0,24): hoy = hoy + 1
-alt, azi = [calc_sun_position(self, 52.0, 4.3571, year, hoy)for self in range(0,24): hoy = hoy + 1]
+# alt, azi = [calc_sun_position(self, 52.0, 4.3571, year, hoy)for self in range(0,24): hoy = hoy + 1]
 
 print("Azimuth angle:", azi)
 print("Altitude angle", alt)
