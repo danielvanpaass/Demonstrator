@@ -1,5 +1,4 @@
 import json
-
 import numpy as np
 import pvlib
 
@@ -76,5 +75,5 @@ def power_out_solar(N_panels, tilt_panel, N_load, type_load):
 
 
 if __name__ == '__main__':
-    print(power_out_solar(2, 30))
-    print(power_out_solar(2, 40))
+    print(power_out_solar(2, 30, 3, "saving"))
+    # print(power_out_solar(2, 40))
