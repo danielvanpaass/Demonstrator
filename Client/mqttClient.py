@@ -3,7 +3,7 @@ import time
 
 import paho.mqtt.client as mqtt
 
-from Client import power_calc
+import power_calc
 
 
 def on_connect(client, userdata, flags, rc):
@@ -21,7 +21,10 @@ def on_message(client, userdata, message):
     tilt_panel = m['tilt_panel']  # choice between 30,35 and 40 degrees
     N_solar = m['N_solar']
     N_load = m['N_load']
-    load_type = m['load_type']
+    try:
+        load_type = m['load_type']
+    except:
+        load_type = "saving"
     client.publish("to_dash", power_calc.power_out_solar(N_solar, tilt_panel, N_load, load_type))
     # simu_hour = decoded['simu_hour']
     # pass simu_hour to HHUB
