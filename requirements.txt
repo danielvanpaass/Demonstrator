@@ -1,9 +1,9 @@
 smbus
-matplotlib~=3.2.1
-numpy~=1.18.4
-paho-mqtt~=1.5.0
-pvlib~=0.7.2
-pandas~=1.0.3
-requests~=2.23.0
-plotly~=4.7.1
-dash~=1.12.0
+matplotlib
+numpy
+paho-mqtt
+pvlib
+pandas
+requests
+plotly
+dash

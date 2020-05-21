@@ -29,6 +29,8 @@ Setup instructions
     #.. ...
     #127.0.1.1       raspberrypiClient
     ##
+2. To be able to import numpy on a Raspbian you need libatlas
+    sudo apt-get install libatlas-base-dev
 2. Install the required packages listed in requirements.txt
 	pip3 install -r requirements.txt
 3. Turn on I2C on the Pi. When using the command line interface:
