@@ -1,0 +1,10 @@
+numpy
+paho-mqtt
+pvlib
+pandas
+requests
+plotly
+dash
+=======
+smbus
+RPi.GPIO
