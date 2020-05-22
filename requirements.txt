@@ -1,9 +1,0 @@
-smbus
-matplotlib
-numpy
-paho-mqtt
-pvlib
-pandas
-requests
-plotly
-dash
