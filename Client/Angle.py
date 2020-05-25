@@ -1,9 +1,9 @@
 # Angle to sun calculation, azimuth TEST
-import pandas as pd
-import math
 import datetime
-import numpy as np
+import math
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 year = 2019
 # hour = pd.date_range(start=year, end='2020', freq='1h')
@@ -78,7 +78,7 @@ self = np.arange(0,25)
 latitude_deg = 52.0
 longitude_deg = 4.3571
 #for self in range(0,24): hoy = hoy + 1
-alt, azi = [calc_sun_position(self, 52.0, 4.3571, year, hoy)for self in range(0,24): hoy = hoy + 1]
+# alt, azi = [calc_sun_position(self, 52.0, 4.3571, year, hoy)for self in range(0,24): hoy = hoy + 1]
 
 print("Azimuth angle:", azi)
 print("Altitude angle", alt)

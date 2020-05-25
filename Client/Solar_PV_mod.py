@@ -1,10 +1,6 @@
 """An implementation of a solar energy model"""
 # size, angle(panel), irradiance, efficiency, temperature reliance
-import time
-import math
-import datetime
 import numpy as np
-import matplotlib.pyplot as pl
 
 
 # Power calculation with ambient temp as operating temp

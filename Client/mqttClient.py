@@ -1,7 +1,9 @@
-import paho.mqtt.client as mqtt
-import time
 import json
-from Client import power_calc
+import time
+
+import paho.mqtt.client as mqtt
+
+import power_calc
 
 
 def on_connect(client, userdata, flags, rc):
@@ -19,7 +21,11 @@ def on_message(client, userdata, message):
     tilt_panel = m['tilt_panel']  # choice between 30,35 and 40 degrees
     N_solar = m['N_solar']
     N_load = m['N_load']
-    client.publish("to_dash", power_calc.power_out_solar(N_solar, tilt_panel, N_load))
+    try:
+        load_type = m['load_type']
+    except:
+        load_type = "saving"
+    client.publish("to_dash", power_calc.power_out_solar(N_solar, tilt_panel, N_load, load_type))
     # simu_hour = decoded['simu_hour']
     # pass simu_hour to HHUB
 
@@ -33,8 +39,9 @@ def getMAC(interface='eth0'):
     return str[0:17]
 
 
-broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
-# broker_address="test.mosquitto.org" #use external broker
+#broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
+#broker_address="test.mosquitto.org" #use external broker
+broker_address="mqtt.eclipse.org" #use external broker
 
 # instantiate client with MAC client ID for the session
 client = mqtt.Client(getMAC('eth0'))
