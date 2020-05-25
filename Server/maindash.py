@@ -57,6 +57,14 @@ app.layout = html.Div(children=[
     html.H3('Load Parameters',
             style={'color': colors['text']}),
     html.Div('Number of houses in the neighbourhood'),
+    dcc.Dropdown(
+        id='dropdownhousehold',
+        options=[
+            {'label': 'Energy saving households', 'value': 'saving'},
+            {'label': 'Average households', 'value': 'average'},
+        ],
+        value='average'
+    ),
     dcc.Input(id='input load', value=160, type='number'),
     html.Button('Refresh', id='buttonload', n_clicks=0),
     html.Div(id='output-pv'),
@@ -100,9 +108,10 @@ def update_graph_live(n, z, k):
 #-------------------load figure---------------------------------------------------------------
 @app.callback(Output('loadpower', 'figure'),
               [Input('buttonload', 'n_clicks')],
-              state=[State('input load', 'value')
+              state=[State('input load', 'value'),
+                     State('dropdownhousehold', 'value')
                      ])
-def update_graph_live_load(n, z, ):
+def update_graph_live_load(n, z, k):
     time.sleep(0.6)
     figure = {
         'data': [
@@ -146,7 +155,7 @@ def update_graph_live_pie(n, z,):
 #-------------------emissions figure---------------------------------------------------------------
 @app.callback(Output('emissions', 'figure'),
               [Input('buttonload', 'n_clicks'), Input('button', 'n_clicks')])
-def update_graph_live_pie(n, z,):
+def update_graph_live_emissions(n, z,):
     time.sleep(0.6)
     dx=({'wind': [10000, 2, 5, 3, 2, 0],
     'net': [100000, 2, 5, 0, 2, 0]})
@@ -191,12 +200,13 @@ def connect_and_run_dash(client):
     @app.callback(
         Output(component_id='output-pv', component_property='children'),
         [Input('button', 'n_clicks'), Input('buttonload', 'n_clicks')],
-        state=[State('input', 'value'), State('dropdown', 'value'), State('input load', 'value')
+        state=[State('input', 'value'), State('dropdown', 'value'), State('input load', 'value'), State('dropdownhousehold', 'value')
                ], )
-    def update_output(n_clicks,n_click, panelvalue, tiltvalue, loadvalue):
+    def update_output(n_clicks,n_click, panelvalue, tiltvalue, loadvalue, loadtype):
         data.update({'N_solar': panelvalue})
         data.update({'tilt_panel': tiltvalue})
         data.update({'N_load': loadvalue})
+        data.update({'load_type': loadtype})
         client.publish("to_clients", json.dumps(data))
 
     app.run_server(debug=False)
