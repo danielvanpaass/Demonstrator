@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 type_turbine = 'WES5'
+wind = [0, 12, 9, 10, 13, 14, 15, 4]
 
 WIND_PARAMETERS = {
     'WES5': {'P_rated': 2500, 'V_rated': 8.5, 'height': 12, 'cut_inspeed': 3.0, 'cut_outspeed': 20, 'diameter': 5},
@@ -32,13 +33,16 @@ def power_calc_wind(wind_speed, **windturbine_params):
            wind_power[x] = windturbine_params['P_rated']
 
     # power losses connection to bus and step-up voltage
-    p_open = 100
-    p_load = ((wind_power - p_open) / v_grid) ** 2 * resistance_load
+    p_open = 200
+    v_grid = 400
+    resistance_c = 0.11
+    resistance_load = 2.4
+    p_load = (((wind_power - p_open) / v_grid) ** 2) * resistance_load
     p_wt = wind_power - p_open - p_load
     p_losses = wind_power - (p_wt - (p_wt ** 2 * resistance_c / (v_grid ** 2)))
 
     # power output
-    p_out_wind = wind_power
+    p_out_wind = wind_power - p_losses
     return p_out_wind.tolist()
 
 
