@@ -22,6 +22,7 @@ def on_message(client, userdata, message):
     N_solar = m['N_solar']
     N_load = m['N_load']
     try:
+        print('f')
         load_type = m['load_type']
     except:
         load_type = "saving"

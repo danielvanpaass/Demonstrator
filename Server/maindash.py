@@ -57,6 +57,9 @@ app.layout = html.Div(children=[
     html.H3('Load Parameters',
             style={'color': colors['text']}),
     html.Div('Number of houses in the neighbourhood'),
+    dcc.Input(id='input load', value=160, type='number'),
+    html.Button('Refresh', id='buttonload', n_clicks=0),
+    html.Div('Type of Households'),
     dcc.Dropdown(
         id='dropdownhousehold',
         options=[
@@ -65,8 +68,6 @@ app.layout = html.Div(children=[
         ],
         value='average'
     ),
-    dcc.Input(id='input load', value=160, type='number'),
-    html.Button('Refresh', id='buttonload', n_clicks=0),
     html.Div(id='output-pv'),
     dcc.Graph(id='pvpower'),
     dcc.Graph(id='loadpower'),
