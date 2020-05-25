@@ -37,7 +37,6 @@ def power_calc_wind(wind_speed, **windturbine_params):
     p_wt = wind_power - p_open - p_load
     p_losses = wind_power - (p_wt - (p_wt ** 2 * resistance_c / (v_grid ** 2)))
 
-
     # power output
     p_out_wind = wind_power
     return p_out_wind.tolist()
