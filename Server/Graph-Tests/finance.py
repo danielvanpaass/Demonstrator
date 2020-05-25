@@ -1,6 +1,7 @@
+import random
+
 import pandas as pd
 import plotly.graph_objects as go
-import random
 
 l = [random.randint(-2,10) for i in range(365)]
 

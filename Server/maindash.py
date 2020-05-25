@@ -1,15 +1,14 @@
+import base64
 import json
-import plotly.express as px
-import pandas as pd
 import time
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 import dash
-from dash.dependencies import Input, Output, State
-import dash_html_components as html
 import dash_core_components as dcc
-import base64
+import dash_html_components as html
+import pandas as pd
+import plotly.graph_objects as go
+from dash.dependencies import Input, Output, State
+from plotly.subplots import make_subplots
 
 data = {}
 dh = {'power_solar': [1, 2, 3],

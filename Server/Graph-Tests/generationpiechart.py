@@ -1,6 +1,3 @@
-import json
-import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 
 data = {'pv':[1,4,1,2,4,2],
