@@ -54,5 +54,5 @@ client.subscribe("to_dash")
 # initial publish of power values
 while True:
     maindash.connect_and_run_dash(client)
-# client.publish("demon/data",power_out_solar(600))
+# client.publish("demon/data",power_out(600))
 # client.publish("demon/data","OFF")#publish

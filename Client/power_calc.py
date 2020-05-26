@@ -48,7 +48,7 @@ solpower40 = power_calc_solar(length, width, efficiency, coefficient, global_ir_
 """Main function to be called in this file, for total power out in a year per hour"""
 
 
-def power_out_solar(N_panels, tilt_panel, N_load, type_load):
+def power_out(N_panels, tilt_panel, N_load, type_load):
     data = {}  # empty dictionary
     if tilt_panel == 30:
         solpower = solpower30
@@ -75,5 +75,5 @@ def power_out_solar(N_panels, tilt_panel, N_load, type_load):
 
 
 if __name__ == '__main__':
-    print(power_out_solar(2, 30, 3, "saving"))
-    # print(power_out_solar(2, 40))
+    print(power_out(2, 30, 3, "saving"))
+    # print(power_out(2, 40))

@@ -4,7 +4,7 @@ import time
 import paho.mqtt.client as mqtt
 
 
-# from solar_power_calc import power_out_solar
+# from solar_power_calc import power_out
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -21,7 +21,7 @@ def on_message(client, userdata, message):
     # decoded = json.loads(message.payload.decode("utf-8"))
     # if decoded['N_solar']!=N_solar:
     #    N_solar = decoded['N_solar']
-    #    client.publish("demon/data", power_out_solar(N_solar))
+    #    client.publish("demon/data", power_out(N_solar))
 
 
 # simu_hour = decoded['simu_hour']
@@ -46,7 +46,7 @@ client.connected_flag = False
 # bind call back functions
 client.on_connect = on_connect
 client.on_message = on_message
-# data_out = power_out_solar(N_solar)
+# data_out = power_out(N_solar)
 client.connect(broker_address)
 # in the loop, call back functions can be activated
 client.loop_start()
@@ -58,5 +58,5 @@ client.publish("demon/data", data_out)
 while True:
     time.sleep(1)
 
-# client.publish("demon/data",power_out_solar(600))
+# client.publish("demon/data",power_out(600))
 # client.publish("demon/data","OFF")#publish

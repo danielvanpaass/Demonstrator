@@ -25,7 +25,7 @@ def on_message(client, userdata, message):
         load_type = m['load_type']
     except:
         load_type = "saving"
-    client.publish("to_dash", power_calc.power_out_solar(N_solar, tilt_panel, N_load, load_type))
+    client.publish("to_dash", power_calc.power_out(N_solar, tilt_panel, N_load, load_type))
     # simu_hour = decoded['simu_hour']
     # pass simu_hour to HHUB
 
@@ -57,5 +57,5 @@ client.subscribe("to_clients")
 while True:
     time.sleep(1)
 
-# client.publish("demon/data",power_out_solar(600))
+# client.publish("demon/data",power_out(600))
 # client.publish("demon/data","OFF")#publish
