@@ -1,9 +1,13 @@
 import json
 import numpy as np
 import pvlib
+import windmod
+import pvmod
 
 # choose good model params
 temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
+pv_params = pvmod.PV_PARAMETERS[type_pvpanel]
+windturbine_params = windmod.WIND_PARAMETERS[type_turbine]
 
 # get weather paramameters
 with open('wind.txt') as json_file:
@@ -26,24 +30,19 @@ load_saving = np.array(load['load_saving'])
 load_average = np.array(load['load_average'])
 
 """Power calculation solar panel with ambient temp as operating temp"""
-
-
-def power_calc_solar(length, width, efficiency, coefficient, irradiance, temperature):
-    p_nom = length * width * efficiency * irradiance
-    p_out = (((coefficient * (temperature - 25)) / 100) * p_nom) + p_nom
-    return p_out
-
-
-# Datasheet imported values
-length, width, efficiency, coefficient = 1.956, 0.992, 0.186, -0.39
-
 # calculate power per solar panel for each tilt
 tcell = pvlib.temperature.sapm_cell(global_ir_30, temp, wind, **temp_params)
-solpower30 = power_calc_solar(length, width, efficiency, coefficient, global_ir_30, tcell)
+solpower30 = pvmod.power_calc_solar(**pv_params, global_ir_30, tcell)
 tcell = pvlib.temperature.sapm_cell(global_ir_35, temp, wind, **temp_params)
-solpower35 = power_calc_solar(length, width, efficiency, coefficient, global_ir_35, tcell)
+solpower35 = pvmod.power_calc_solar(**pv_params, global_ir_35, tcell)
 tcell = pvlib.temperature.sapm_cell(global_ir_40, temp, wind, **temp_params)
-solpower40 = power_calc_solar(length, width, efficiency, coefficient, global_ir_40, tcell)
+solpower40 = pvmod.power_calc_solar(**pv_params, global_ir_40, tcell)
+
+"""Power calculation wind turbine"""
+
+windpower = windmod.power_calc_wind(wind_speed, **windturbine_params)
+
+
 
 """Main function to be called in this file, for total power out in a year per hour"""
 
