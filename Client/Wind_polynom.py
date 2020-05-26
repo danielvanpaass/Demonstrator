@@ -24,14 +24,6 @@ def power_calc_wind(wind_speed, **windturbine_params):
 
     wind_power = winddelta * windturbine_params['P_rated'] / (windturbine_params['V_rated'] ** 3 - windturbine_params['cut_inspeed'] ** 3)
 
-    for x in range(0, len(wind_speed)):
-        if wind_speed[x]<windturbine_params['cut_inspeed'] or wind_speed[x]>windturbine_params['cut_outspeed']:
-            wind_power[x] = 0
-
-    for x in range(0, len(wind_speed)):
-       if wind_power[x]>windturbine_params['P_rated']:
-           wind_power[x] = windturbine_params['P_rated']
-
     # power losses connection to bus and step-up voltage
     p_open = 200
     v_grid = 400
@@ -39,14 +31,24 @@ def power_calc_wind(wind_speed, **windturbine_params):
     resistance_load = 2.4
     p_load = (((wind_power - p_open) / v_grid) ** 2) * resistance_load
     p_wt = wind_power - p_open - p_load
-    p_losses = wind_power - (p_wt - (p_wt ** 2 * resistance_c / (v_grid ** 2)))
+    p_losses = wind_power - p_wt + (p_wt ** 2 * resistance_c / (v_grid ** 2))
+
+    for x in range(0, len(wind_speed)):
+        if wind_speed[x]<windturbine_params['cut_inspeed'] or wind_speed[x]>windturbine_params['cut_outspeed']:
+            wind_power[x] = 0
+            p_losses[x] = 0
+
+    for x in range(0, len(wind_speed)):
+       if wind_power[x]>windturbine_params['P_rated']:
+           wind_power[x] = windturbine_params['P_rated']
 
     # power output
-    p_out_wind = wind_power - p_losses
+    p_out_wind = wind_power
     return p_out_wind.tolist()
 
 
 windpower = power_calc_wind(wind, **windturbine_parameters)
 print(windpower)
+print(loss)
 plt.plot(windpower)
 plt.show()
