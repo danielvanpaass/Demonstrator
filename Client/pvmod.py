@@ -11,7 +11,7 @@ PV_PARAMETERS = {
 }
 
 
-# Power calculation with ambient temp as operating temp
+# Power calculation with ambient temp as operating temp in KW
 def power_calc_solar(irradiance, temperature, pv_type):
     selectedpv = PV_PARAMETERS[pv_type]
     p_nom = selectedpv['length'] * selectedpv['width'] * selectedpv['efficiency'] * irradiance

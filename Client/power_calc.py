@@ -1,13 +1,11 @@
 import json
 import numpy as np
 import pvlib
-import windmod
-import pvmod
+from Client import windmod
+from Client import pvmod
 
 # choose good model params
 temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
-pv_params = pvmod.PV_PARAMETERS[type_pvpanel]
-windturbine_params = windmod.WIND_PARAMETERS[type_turbine]
 
 # get weather paramameters
 with open('wind.txt') as json_file:
@@ -30,31 +28,23 @@ load_saving = np.array(load['load_saving'])
 load_average = np.array(load['load_average'])
 
 """Power calculation solar panel with ambient temp as operating temp"""
-# calculate power per solar panel for each tilt
+# calculate temperature per solar panel for each tilt
 tcell = pvlib.temperature.sapm_cell(global_ir_30, temp, wind, **temp_params)
-solpower30 = pvmod.power_calc_solar(**pv_params, global_ir_30, tcell)
 tcell = pvlib.temperature.sapm_cell(global_ir_35, temp, wind, **temp_params)
-solpower35 = pvmod.power_calc_solar(**pv_params, global_ir_35, tcell)
 tcell = pvlib.temperature.sapm_cell(global_ir_40, temp, wind, **temp_params)
-solpower40 = pvmod.power_calc_solar(**pv_params, global_ir_40, tcell)
-
-"""Power calculation wind turbine"""
-
-windpower = windmod.power_calc_wind(wind_speed, **windturbine_params)
-
 
 
 """Main function to be called in this file, for total power out in a year per hour"""
 
 
-def power_out(N_panels, tilt_panel, N_load, type_load):
+def power_out(N_panels, tilt_panel, N_load, type_load, type_pvpanel, type_turbine):
     data = {}  # empty dictionary
     if tilt_panel == 30:
-        solpower = solpower30
+        solpower = pvmod.power_calc_solar(global_ir_30, tcell, type_pvpanel)
     elif tilt_panel == 35:
-        solpower = solpower35
+        solpower = pvmod.power_calc_solar(global_ir_35, tcell, type_pvpanel)
     elif tilt_panel == 40:
-        solpower = solpower40
+        solpower = pvmod.power_calc_solar(global_ir_40, tcell, type_pvpanel)
     else:
         raise ValueError('tilt not defined')
     tot_solpower = solpower * N_panels
@@ -67,12 +57,16 @@ def power_out(N_panels, tilt_panel, N_load, type_load):
         raise ValueError('load_type not defined')
     tot_load = load * N_load
     tot_load = np.around(tot_load.astype(np.float), 3)
+    windpower = windmod.power_calc_wind(wind, type_turbine)
+    windpower = np.around(windpower.astype(np.float), 3)
     data.update({'power_solar': tot_solpower.tolist()})
+    data.update({'power_wind': windpower.tolist()})
+
     data.update({'power_load': tot_load.tolist()})
 
     return json.dumps(data)
 
 
 if __name__ == '__main__':
-    print(power_out(2, 30, 3, "saving"))
+    print(power_out(30, 30, 3, "saving", 'RSM72-6-360M','WES5'))
     # print(power_out(2, 40))

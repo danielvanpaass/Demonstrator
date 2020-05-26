@@ -25,7 +25,15 @@ def on_message(client, userdata, message):
         load_type = m['load_type']
     except:
         load_type = "saving"
-    client.publish("to_dash", power_calc.power_out(N_solar, tilt_panel, N_load, load_type))
+    try:
+        type_pvpanel = m['pv_type']
+    except:
+        type_pvpanel = "RSM72-6-360M"
+    try:
+        type_turbine = m['turbine_type']
+    except:
+        type_turbine = "WES5"
+    client.publish("to_dash", power_calc.power_out(N_solar, tilt_panel, N_load, load_type, type_pvpanel, type_turbine))
     # simu_hour = decoded['simu_hour']
     # pass simu_hour to HHUB
 
