@@ -9,7 +9,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
-
+start = 0.0
+end = 0.0
 data = {}
 dh = {'power_solar': [1, 2, 3],
       'power_load': [1, 2, 3],}
@@ -79,6 +80,8 @@ app.layout = html.Div(children=[
 def dash_update_solar(dict):
     global dh
     dh.update(dict)
+    end = time.time()
+    print(end - start)
 
 #-------------------pv figure---------------------------------------------------------------
 @app.callback(Output('pvpower', 'figure'),
@@ -87,7 +90,7 @@ def dash_update_solar(dict):
                      State('dropdown', 'value')
                      ])
 def update_graph_live(n, z, k):
-    time.sleep(0.6)
+    time.sleep(1.3)#1.3 needed for the pi, (pi exe time is 1.1)
     figure = {
         'data': [
             {'x': dh['time'], 'y': dh['power_solar'], 'type': 'line', 'name': 'PV'}
@@ -208,6 +211,9 @@ def connect_and_run_dash(client):
         data.update({'N_load': loadvalue})
         data.update({'load_type': loadtype})
         client.publish("to_clients", json.dumps(data))
+        global start
+        start = time.time()
+
 
     app.run_server(debug=False)
 
