@@ -1,0 +1,23 @@
+All from : https://en.wind-turbine-models.com/turbines?kwrange=0%2C60 
+
+Windmills:
+
+https://en.wind-turbine-models.com/turbines/812-ades-ades-60 {ades60}
+
+https://en.wind-turbine-models.com/turbines/1854-aeolos-aeolos-v-10kw {aeolos10}
+
+https://en.wind-turbine-models.com/turbines/1683-hummer-h25.0-60kw {hummer60}
+
+https://en.wind-turbine-models.com/turbines/1633-aria-libellula-60i {aria60}
+
+https://en.wind-turbine-models.com/turbines/1634-aria-libellula-55 {aria55+}
+
+
+http://www.urbanwind.net/pdf/CATALOGUE_V2.pdf {wes5}
+
+
+Pvpanels:
+
+http://www.solaruk.com/pdf/DS%20-%20HIT235%20-%20HIT%20235%20SE10%20-%20datasheet.pdf
+
+https://solardistri.nl/wp-content/uploads/2018/08/Datasheet-RSM72_6_360M_380M.pdf
