@@ -18,6 +18,6 @@ http://www.urbanwind.net/pdf/CATALOGUE_V2.pdf {wes5}
 
 Pvpanels:
 
-http://www.solaruk.com/pdf/DS%20-%20HIT235%20-%20HIT%20235%20SE10%20-%20datasheet.pdf
+https://www.zonnepanelen-xtra.nl/imagenew/pdf2017/panasonic-n245_240_nl.pdf
 
 https://solardistri.nl/wp-content/uploads/2018/08/Datasheet-RSM72_6_360M_380M.pdf
