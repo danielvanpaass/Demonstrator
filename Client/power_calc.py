@@ -80,5 +80,7 @@ def power_out_load(N_load, type_load):
 
 
 if __name__ == '__main__':
-    print(power_out(30, 30, 3, "saving", 'RSM72-6-360M', 'WES5'))
+    cel1 = power_out_solar(1, 35, "RSM72-6-360M")
+    cel2 = power_out_solar(1, 35, 'HIT-N240SE10')
+    print(power_out_load(1,'average'))
     # print(power_out(2, 40))
