@@ -1,0 +1,17 @@
+All from : https://en.wind-turbine-models.com/turbines?kwrange=0%2C60 
+
+https://en.wind-turbine-models.com/turbines/812-ades-ades-60 {ades60}
+
+https://en.wind-turbine-models.com/turbines/1120-aerodyn-aeolus-11
+
+https://en.wind-turbine-models.com/turbines/1854-aeolos-aeolos-v-10kw {aeolos10}
+
+https://en.wind-turbine-models.com/turbines/1686-hummer-h17.0-50kw
+
+https://en.wind-turbine-models.com/turbines/1683-hummer-h25.0-60kw {hummer60}
+
+https://en.wind-turbine-models.com/turbines/1633-aria-libellula-60i {aria60}
+
+https://en.wind-turbine-models.com/turbines/1634-aria-libellula-55 {aria55+}
+
+http://www.urbanwind.net/pdf/CATALOGUE_V2.pdf {wes5}
