@@ -1,5 +1,11 @@
-pvlib
 numpy
 paho-mqtt
+pvlib
 pandas
+pyusb
+requests
+plotly
+dash
+#=======
 smbus
+RPi.GPIO
