@@ -84,9 +84,9 @@ while True:
         wind,solar = ReadUsbPi.connected_usb()#gives wind = 1,0 and solar = 1,0
         load = 1
     else:
-        wind = 0
+        wind = 1
         solar = 1
-        load = 0
+        load = 1
 
 # client.publish("demon/data",power_out(600))
 # client.publish("demon/data","OFF")#publish

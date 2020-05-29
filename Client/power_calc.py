@@ -80,7 +80,8 @@ def power_out_load(N_load, type_load):
 
 
 if __name__ == '__main__':
-    cel1 = power_out_solar(1, 35, "RSM72-6-360M")
-    cel2 = power_out_solar(1, 35, 'HIT-N240SE10')
+    cel2 = power_out_solar(1, 35, 'HIT-N245SE10')
+    cel22 = json.loads(cel2)
+    max(cel22['power_solar'])
     print(power_out_load(1,'average'))
     # print(power_out(2, 40))
