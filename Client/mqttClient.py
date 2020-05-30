@@ -40,13 +40,14 @@ def on_message(client, userdata, message):
         N_solar = m['N_solar']
 
         client.publish("to_dash", power_calc.power_out_solar(N_solar,tilt_panel,type_pvpanel))
-    if load:
+    if load:#it is important that load is sent back last, because the battery calculation will wait for this to start
         try:
             load_type = m['load_type']
         except:
             load_type = "saving"
             print('no load type specified')
         N_load = m['N_load']
+        time.sleep(0.08)
         client.publish("to_dash", power_calc.power_out_load(N_load,load_type))
 
     # simu_hour = decoded['simu_hour']

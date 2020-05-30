@@ -18,16 +18,21 @@ temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_
 with open('wind.txt') as json_file:
     wind = json.load(json_file)
 wind = np.array(wind['wind'])
+wind = wind[23:-1] #the last day of previous year is still included in wind.txt
 with open('solar30.txt') as json_file:
     solar30 = json.load(json_file)
 global_ir_30 = np.array(solar30['irradiance_diffuse']) + np.array(solar30['irradiance_direct'])
+global_ir_30 = global_ir_30[23:-1]
 with open('solar35.txt') as json_file:
     solar35 = json.load(json_file)
 global_ir_35 = np.array(solar35['irradiance_diffuse']) + np.array(solar35['irradiance_direct'])
+global_ir_35 = global_ir_35[23:-1]
 with open('solar40.txt') as json_file:
     solar40 = json.load(json_file)
 global_ir_40 = np.array(solar40['irradiance_diffuse']) + np.array(solar40['irradiance_direct'])
+global_ir_40 = global_ir_40[23:-1]
 temp = np.array(solar40['temp'])
+temp = temp[23:-1]
 # get load
 with open('load.txt') as json_file:
     load = json.load(json_file)

@@ -1,10 +1,12 @@
 import json
-
 import paho.mqtt.client as mqtt
 
 import maindash
 
-global data_out
+try:
+    import battery
+except:
+    from Server import battery
 
 
 def on_connect(client, userdata, flags, rc):
@@ -16,10 +18,20 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, message):
+
+
     m = message.payload.decode("utf-8")
-    print("message received ", str(m))
-    print("message topic=", message.topic)
-    maindash.dash_update_solar(json.loads(m))
+    received_data = json.loads(m)
+    data_in.update(received_data)
+    dataaa = data_in
+    print(received_data)
+    if 'power_load' in received_data:
+        print('hi')
+        print(*data_in)
+        batteries = battery.power_battery(data_in)
+        print (*batteries)
+        data_in.update(batteries)
+    maindash.dash_update_solar(data_in)
     # m = message.payload.decode("utf-8")
     # with open('data.json', 'w', encoding='utf-8') as f:
     #     json.dump(m, f, ensure_ascii=False, indent=4)
@@ -32,7 +44,7 @@ def getMAC(interface='eth0'):
     except:
         str = 'alias_server_notpi'
     return str[0:17]
-
+data_in = {}
 
 # broker_address = "raspberrypi"  # server Pi name (you can also use IP address here)
 # broker_address="test.mosquitto.org" #use external broker
