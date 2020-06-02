@@ -1,6 +1,6 @@
 import numpy as np
 import random
-
+import json
 
 class Car():
     def __init__(self, SoC):
@@ -97,7 +97,7 @@ def power_battery(powers, N_EV):
     # go through the year
     for x in range(0, len(power_load)):
         #sort all cars by SoC, starting from lowest
-        cars.sort(key=lambda car: car.getSoC())
+        # cars.sort(key=lambda car: car.getSoC())
         excess_power = power_source[x] - power_load[x]
         day = x // 24
         day_of_week = day % 7
@@ -160,6 +160,8 @@ def power_battery(powers, N_EV):
             'EV_SoC': EV_SoC.tolist(), 'excess_power': excess_power.tolist(), 'H_SoC': H_SoC.tolist(), 'EV_load':EV_load.tolist()}
     return data
 if __name__ == '__main__':
-    powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-              'power_solar': [3, 6, 30, 60, 70, 7, 0, 0, 0, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
-    a = power_battery(powers, N_EV=5)
+    with open('powers.txt', 'r') as outfile:
+        powers = json.load(outfile)
+    # powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #           'power_solar': [3, 6, 30, 60, 70, 7, 0, 0, 0, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
+    a = power_battery(powers, N_EV=30)
