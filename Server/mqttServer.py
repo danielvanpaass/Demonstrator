@@ -29,6 +29,11 @@ def on_message(client, userdata, message):
         batteries = battery.power_battery(data_in, N_EV=30)
         print(*batteries)
         data_in.update(batteries)
+    if 'hour_simul' in received_data:
+        hour_simul = received_data['hour_simul']
+        actuator_data = received_data['actuator_data']
+        year_data = data_in
+        battery = battery.power_battery_realtime(actuator_data, year_data, hour_simul, N_EV = 30)
     maindash.dash_update_solar(data_in)
     # m = message.payload.decode("utf-8")
     # with open('data.json', 'w', encoding='utf-8') as f:
