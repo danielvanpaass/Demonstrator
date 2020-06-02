@@ -18,8 +18,6 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, message):
-
-
     m = message.payload.decode("utf-8")
     received_data = json.loads(m)
     data_in.update(received_data)
@@ -28,8 +26,8 @@ def on_message(client, userdata, message):
     if 'power_load' in received_data:
         print('hi')
         print(*data_in)
-        batteries = battery.power_battery(data_in)
-        print (*batteries)
+        batteries = battery.power_battery(data_in, N_EV=30)
+        print(*batteries)
         data_in.update(batteries)
     maindash.dash_update_solar(data_in)
     # m = message.payload.decode("utf-8")
@@ -44,11 +42,13 @@ def getMAC(interface='eth0'):
     except:
         str = 'alias_server_notpi'
     return str[0:17]
+
+
 data_in = {}
 
 # broker_address = "raspberrypi"  # server Pi name (you can also use IP address here)
-# broker_address="test.mosquitto.org" #use external broker
-broker_address = "mqtt.eclipse.org"  # use external broker
+broker_address = "test.mosquitto.org"  # use external broker
+# broker_address = "mqtt.eclipse.org"  # use external broker
 
 # instantiate client with MAC client ID for the session
 client = mqtt.Client(getMAC('eth0'))

@@ -21,7 +21,7 @@ def on_message(client, userdata, message):
     m = json.loads(message.payload.decode("utf-8"))
     print("message received ", str(m))
     print("message topic=", message.topic)
-    if(wind):
+    if wind:
         print('wind')
         try:
             type_turbine = m['turbine_type']
@@ -64,8 +64,8 @@ def getMAC(interface='eth0'):
 
 
 #broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
-#broker_address="test.mosquitto.org" #use external broker
-broker_address="mqtt.eclipse.org" #use external broker
+broker_address="test.mosquitto.org" #use external broker
+# broker_address="mqtt.eclipse.org" #use external broker
 
 # instantiate client with MAC client ID for the session
 client = mqtt.Client(getMAC('eth0'))
