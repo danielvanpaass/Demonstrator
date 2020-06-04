@@ -7,13 +7,11 @@ def actuator_hhub(hour, powers, on):
     if on:                                          # turn on actuator signal
         if 'power_solar' in powers:
             power = powers['power_solar']
-            powertype = 'SOLARPV'
             power_min = min(power)
             power_max = max(power)
             for x in range(hour, len(powers)):
                 power = powers[x]
-                hhub.setModel(power, hhub.Model.powertype, power_min, power_max)
-
+                hhub.setModel(power, hhub.Model.SOLARPV, power_min, power_max)
                 sleep(1)
         if 'power_wind' in powers:
             power_min = min(powers)
