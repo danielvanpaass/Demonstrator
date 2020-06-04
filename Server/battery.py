@@ -1,18 +1,92 @@
 import numpy as np
-from math import sqrt
+import random
+import json
 
+class Car():
+    def __init__(self, SoC):
+        self.SoC = SoC
+        # self.working = 0  # all cars home
+        self.powerMax = 8  # takes roughly 4 hours to charge car fully with level 2 station
+        self.energyMax = 30
+        self.energyMin = 5  # enough for 1 more round trip to work
+        self.currentEnergy = SoC * self.energyMax
+        self.workdays = random.sample(range(5), 3) + [
+            (random.randint(5, 6))]  # every car leaves home 3x from workdays, + 1 in the weekend, 0 means monday
+
+    def needCharging(self):
+        if self.currentEnergy <= self.energyMin + 2:
+            self.currentEnergy = self.currentEnergy + 2 #this equals single trip to work
+            return 2
+        else: return 0
+
+    def getSoC(self):
+        self.SoC = self.currentEnergy/self.energyMax
+        return self.SoC
+
+    def takePower(self, power, day, hour): #should come in a positieve power
+        if day in self.workdays and 9 <= hour <= 18:
+            return 0  # car is working so no power
+        energy_surplus = max(self.currentEnergy - self.energyMin,0) # so surplus has to be larger than 0 or it will give 0
+        power_out = min(energy_surplus, self.powerMax, power) #you have either the maximum power constraint or the E surplus constraint
+        self.currentEnergy = self.currentEnergy - power_out
+        return power_out
+
+    def storePower(self, power, day, hour):  # power should be negative because storing power
+        if day in self.workdays and 9 <= hour <= 18:
+            return 0  # car is working so no power
+        energy_chargeble = max( self.energyMax-self.currentEnergy,0)#  has to be larger than 0 or it will give 0
+        power_out = min(energy_chargeble, self.powerMax, -power)#you have either the maximum power constraint or the E chargeble constraint
+        self.currentEnergy = self.currentEnergy + power_out
+        return -power_out
+
+    def returnFromWork(self, day):
+        if day in self.workdays:
+            self.currentEnergy = self.currentEnergy - 4  # takes 4 kwh round trip to work
+            return 1  # sucessful
+        else:
+            return 0
+
+
+    # def setWork(self, workStatus):
+    #     self.working = workStatus
+
+
+class HydrogenTank:
+    def __init__(self, SoC):
+        self.SoC = SoC
+        self.powerMax = 100  # kwh
+        self.energyMax = 300
+        self.currentEnergy = SoC * self.energyMax
+
+    def takePower(self, power):
+        energy_surplus = max(self.currentEnergy,0) # so surplus has to be larger than 0 or it will give 0
+        power_out = min(energy_surplus, self.powerMax, -power) #you have either the maximum power constraint or the E surplus constraint
+        self.currentEnergy = self.currentEnergy - power_out
+        return power_out
+
+    def storePower(self, power):
+        energy_chargeble = max( self.energyMax-self.currentEnergy,0)#  has to be larger than 0 or it will give 0
+        power_out = min(energy_chargeble, self.powerMax, -power)#you have either the maximum power constraint or the E chargeble constraint
+        self.currentEnergy = self.currentEnergy + power_out
+        return -power_out
+
+    def getSoC(self):
+        self.SoC = self.currentEnergy/self.energyMax
+        return self.SoC
+
+    def resetSoC(self, SoC):
+        self.SoC = SoC
+        self.currentEnergy = SoC * self.energyMax
+
+global_hydrogen = HydrogenTank(0.7)
+global_cars = []
 
 def power_battery(powers, N_EV):
-    EV_eff = 0.92
-    EV_P_max = 80 * N_EV
-    EV_E_max = 30 * sqrt(EV_eff) * N_EV
-    EV_E_min = 0.5 * EV_E_max
-    EV_E_commute = 4 * N_EV  # round trip for all car in kwh
-    EV_E_current = 0.6 * EV_E_max  # initial conditions
-    H_eff = 0.7
-    H_P_max = 100
-    H_E_max = 300 * sqrt(H_eff)
-    H_E_current = 0.6 * H_E_max
+
+    global global_cars,global_hydrogen
+    global_cars = []
+    global_hydrogen.resetSoC(0.7)
+
 
     power_load = np.array(powers['power_load'])
     power_source = np.zeros((len(power_load)))
@@ -23,176 +97,170 @@ def power_battery(powers, N_EV):
     PEV_out = np.zeros((len(power_load),))
     PH_out = np.zeros((len(power_load),))
     Pgrid_out = np.zeros((len(power_load),))
-    EV_SoC_out =np.zeros((len(power_load),))
+    EV_SoC_out = np.zeros((len(power_load),))
     H_SoC_out = np.zeros((len(power_load),))
-    Pexcess_out = np.zeros((len(power_load),))
-    wknd_factor = 0.8
-    weekday_factor = 0.3
-    night_factor = 1
-
-    EV_P_max_wknd = EV_P_max * wknd_factor
-    EV_E_max_wknd = EV_E_max * wknd_factor
-    EV_E_min_wknd = EV_E_min * wknd_factor
-
-    EV_P_max_weekday = EV_P_max * weekday_factor
-    EV_E_max_weekday = EV_E_max * weekday_factor
-    EV_E_min_weekday = EV_E_min * weekday_factor
-
-    EV_P_max_night = EV_P_max * night_factor
-    EV_E_max_night = EV_E_max * night_factor
-    EV_E_min_night = EV_E_min * night_factor
-
+    excess_power_out = np.zeros((len(power_load),))
+    EV_load_out = np.zeros((len(power_load),))
+    cars = []
+    # create all cars
+    for x in range(N_EV):
+        car = Car(0.7)
+        cars.append(car)  # starting all cars with battery on 70%
+        global_cars.append(car)
+    # create Hydrogen tank
+    hydro = HydrogenTank(0.7)
+    # go through the year
     for x in range(0, len(power_load)):
-        Pexcess = power_source[x] - power_load[x]
-        Pexcess_out[x]=Pexcess
-        H_E_left = H_E_max - H_E_current
-        H_E_over = H_E_current
+        #sort all cars by SoC, starting from lowest
+        # cars.sort(key=lambda car: car.getSoC())
+        excess_power = power_source[x] - power_load[x]
         day = x // 24
         day_of_week = day % 7
         hour_of_day = x % 24
-        H_SoC_out[x] = H_E_current/H_E_max
-        if day_of_week > 4:  # so in the weekend
-            if 9 < hour_of_day < 20:
-                if hour_of_day == 10:
-                    EV_E_returning_cars = (EV_E_current - EV_E_commute) * (
-                            1 - wknd_factor)  # calculate how much energy the departed cars will have upon return
-                    EV_E_current = EV_E_current * wknd_factor
-                EV_SoC =EV_E_current/EV_E_max_wknd
-                EV_E_left = EV_E_max_wknd - EV_E_current
-                EV_E_over = EV_E_current - EV_E_min_wknd
-                Pgrid, PH, PEV = excesspowerflow(Pexcess, EV_P_max_wknd, EV_E_left, EV_E_over, H_E_left, H_E_over,
-                                                 H_P_max, H_eff, EV_eff, EV_E_commute)
-                EV_E_current = EV_E_current - PEV
-                H_E_current = H_E_current - PH
-                PEV_out[x] = PEV
-                PH_out[x] = PH
-                Pgrid_out[x] = Pgrid
-                EV_SoC_out[x] = EV_SoC
-                if hour_of_day == 19:  # add the returning cars to current EV
-                    EV_E_current = EV_E_current + EV_E_returning_cars
-            else:  # so at night
-                if hour_of_day == 20:
-                    EV_E_current = EV_E_current * night_factor
-                EV_SoC =  EV_E_current/EV_E_max_night
-                EV_E_left = EV_E_max_night - EV_E_current
-                EV_E_over = EV_E_current - EV_E_min_night
-                Pgrid, PH, PEV = excesspowerflow(Pexcess, EV_P_max_night, EV_E_left, EV_E_over, H_E_left, H_E_over,
-                                                 H_P_max, H_eff, EV_eff, EV_E_commute)
-                EV_E_current = EV_E_current - PEV
-                H_E_current = H_E_current - PH
-                PEV_out[x] = PEV
-                PH_out[x] = PH
-                Pgrid_out[x] = Pgrid
-                EV_SoC_out[x] = EV_SoC
-        if day_of_week < 5:  # on workdays
-            if 7 < hour_of_day < 19:
-                if hour_of_day == 8:
-                    EV_E_returning_cars = (EV_E_current - EV_E_commute) * (
-                            1 - weekday_factor)  # calculate how much energy the departed cars will have upon return
-                    EV_E_current = EV_E_current * weekday_factor
-                EV_SoC = EV_E_current/EV_E_max_weekday
-                EV_E_left = EV_E_max_weekday - EV_E_current
-                EV_E_over = EV_E_current - EV_E_min_weekday
-                Pgrid, PH, PEV = excesspowerflow(Pexcess, EV_P_max_weekday, EV_E_left, EV_E_over, H_E_left, H_E_over,
-                                                 H_P_max, H_eff, EV_eff, EV_E_commute)
-                EV_E_current = EV_E_current - PEV
-                H_E_current = H_E_current - PH
-                PEV_out[x] = PEV
-                PH_out[x] = PH
-                Pgrid_out[x] = Pgrid
-                EV_SoC_out[x] = EV_SoC
-                if hour_of_day == 18:  # add the returning cars to current EV
-                    EV_E_current = EV_E_current + EV_E_returning_cars
-            else:  # so at night
-                if hour_of_day == 19 or x == 0:#since it is initialized at midnight monday, you need to apply this condition there too
-                    EV_E_current = EV_E_current * night_factor
-                EV_SoC =  EV_E_current/EV_E_max_night
-                EV_E_left = EV_E_max_night - EV_E_current
-                EV_E_over = EV_E_current - EV_E_min_night
-                Pgrid, PH, PEV = excesspowerflow(Pexcess, EV_P_max_night, EV_E_left, EV_E_over, H_E_left, H_E_over,
-                                                 H_P_max, H_eff, EV_eff, EV_E_commute)
-                EV_E_current = EV_E_current - PEV
-                H_E_current = H_E_current - PH
-                PEV_out[x] = PEV
-                PH_out[x] = PH
-                Pgrid_out[x] = Pgrid
-                EV_SoC_out[x] = EV_SoC
+        EV_load = 0
+        if hour_of_day == 19:#return from work
+            for i in range(0,N_EV):
+                cars[i].returnFromWork(day_of_week)
+        for i in range(0,N_EV):
+            EV_load = EV_load + cars[i].needCharging()
+        excess_power = excess_power + EV_load
+        EV_load_out[x] = EV_load
+        excess_power_out[x] = excess_power
+
+        if excess_power > 0:#positive so needs to store energy
+            stored_power_EV = 0
+            for i in range(0,N_EV):
+                stored_power = cars[i].storePower(-excess_power, day_of_week, hour_of_day)
+                stored_power_EV = stored_power_EV + stored_power
+                excess_power = excess_power + stored_power
+                #the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power on this
+                if abs(excess_power) < 0.001 : #if part of the cars were enough, not the whole list will be looked through
+                    break
+            PEV_out[x] = stored_power_EV
+            if excess_power > 0.001: #this means that all cars had not enough to store the kwh
+                stored_power = hydro.storePower(-excess_power)
+                PH_out[x] = stored_power
+                excess_power = excess_power + stored_power
+            if excess_power > 0.001:
+                stored_power = -excess_power
+                Pgrid_out[x] = stored_power
+        else: #negative so needs to take energy from batteries
+            power_taken_EV = 0
+            for i in range(N_EV-1, -1, -1): # go backwards through the list, which means it will start with the lowest SoC
+                power_taken = cars[i].takePower(-excess_power, day_of_week, hour_of_day)
+                power_taken_EV = power_taken_EV + power_taken
+                excess_power = excess_power + power_taken
+                #the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power on this
+                if abs(excess_power) < 0.001 : #if part of the cars were enough, not the whole list will be looked through
+                    break
+            PEV_out[x] = power_taken_EV
+            if abs(excess_power) > 0.001 : #this means that not all cars had enough energy
+                power_taken = hydro.takePower(-excess_power)
+                PH_out[x] = power_taken
+                excess_power = excess_power + power_taken
+            if abs(excess_power) > 0.001:
+                power_taken = -excess_power
+                Pgrid_out[x] = power_taken
+        for i in range(0, N_EV):
+            EV_SoC_out[x] = EV_SoC_out[x] + cars[i].getSoC()/N_EV #store the average SoC
+        H_SoC_out[x]=hydro.getSoC()
     Pgrid = np.around(Pgrid_out.astype(np.float), 3)
     PH = np.around(PH_out.astype(np.float), 3)
     PEV = np.around(PEV_out.astype(np.float), 3)
     EV_SoC = np.around(EV_SoC_out.astype(np.float), 3)
-    Pexcess = np.around(Pexcess_out.astype(np.float), 3)
+    excess_power = np.around(excess_power_out.astype(np.float), 3)
     H_SoC = np.around(H_SoC_out.astype(np.float), 3)
-    data = {'power_grid': Pgrid.tolist(), 'power_EV': PEV.tolist(), 'power_hydrogen': PH.tolist(), 'EV_SoC':EV_SoC.tolist(), 'Pexcess':Pexcess.tolist(),'H_SoC':H_SoC.tolist()}
+    EV_load = np.around(EV_load_out.astype(np.float), 3)
+    data = {'power_grid': Pgrid.tolist(), 'power_EV': PEV.tolist(), 'power_hydrogen': PH.tolist(),
+            'EV_SoC': EV_SoC.tolist(), 'excess_power': excess_power.tolist(), 'H_SoC': H_SoC.tolist(), 'EV_load':EV_load.tolist()}
+    return data
+
+def power_battery_realtime (actuator_powers, year_data, hour):
+    if 'power_load' in actuator_powers:
+        power_load = actuator_powers['power_load']
+    else:
+        power_load = year_data['power_load'][hour]
+    power_source = 0
+    if 'power_solar' in actuator_powers:
+        power_source += actuator_powers['power_solar']
+    else:
+        power_source += year_data['power_solar'][hour]
+    if 'power_wind' in actuator_powers:
+        power_source += actuator_powers['power_wind']
+    else:
+        power_source += year_data['power_wind'][hour]
+    global global_hydrogen, global_cars
+    N_EV = len(global_cars)
+    excess_power = power_source - power_load
+    day = hour // 24
+    day_of_week = day % 7
+    hour_of_day = hour % 24
+    if hour_of_day == 19:  # return from work
+        for i in range(0, N_EV):
+            global_cars[i].returnFromWork(day_of_week)
+    EV_load = 0
+    for i in range(0, N_EV):
+        EV_load = EV_load + global_cars[i].needCharging()
+    excess_power = excess_power + EV_load
+    excess_power_out = excess_power
+    EV_load_out=EV_load
+    Pgrid_out=PH_out = 0.0
+    if excess_power > 0:  # positive so needs to store energy
+        stored_power_EV = 0.0
+        for i in range(0, N_EV):
+            stored_power = global_cars[i].storePower(-excess_power, day_of_week, hour_of_day)
+            stored_power_EV = stored_power_EV + stored_power
+            excess_power = excess_power + stored_power
+            # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power on this
+            if abs(
+                    excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
+                break
+        PEV_out = stored_power_EV
+        if excess_power > 0.001:  # this means that all cars had not enough to store the kwh
+            stored_power = global_hydrogen.storePower(-excess_power)
+            excess_power = excess_power + stored_power
+            PH_out = stored_power
+        if excess_power > 0.001:
+            stored_power = -excess_power
+            Pgrid_out = stored_power
+    else:  # negative so needs to take energy from batteries
+        power_taken_EV = 0.0
+        for i in range(N_EV - 1, -1,-1):  # go backwards through the list, which means it will start with the lowest SoC
+            power_taken = global_cars[i].takePower(-excess_power, day_of_week, hour_of_day)
+            power_taken_EV = power_taken_EV + power_taken
+            excess_power = excess_power + power_taken
+
+            # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power on this
+            if abs(excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
+                break
+        PEV_out = power_taken_EV
+        if abs(excess_power) > 0.001:  # this means that not all cars had enough energy
+            power_taken = global_hydrogen.takePower(-excess_power)
+            excess_power = excess_power + power_taken
+            PH_out = power_taken
+        if abs(excess_power) > 0.001:
+            power_taken = -excess_power #from grid
+            Pgrid_out = power_taken
+    EV_SoC_out = 0.0
+    for i in range(0, N_EV):
+        EV_SoC_out +=  global_cars[i].getSoC() / N_EV  # store the average SoC
+    H_SoC_out = global_hydrogen.getSoC()
+    Pgrid = np.around(Pgrid_out, 3)
+    PH = np.around(PH_out, 3)
+    PEV = np.around(PEV_out, 3)
+    EV_SoC = np.around(EV_SoC_out, 3)
+    excess_power = np.around(excess_power_out, 3)
+    H_SoC = np.around(H_SoC_out, 3)
+    EV_load = np.around(EV_load_out, 3)
+    data = {'power_grid': Pgrid.tolist(), 'power_EV': PEV.tolist(), 'power_hydrogen': PH.tolist(),
+            'EV_SoC': EV_SoC.tolist(), 'excess_power': excess_power.tolist(), 'H_SoC': H_SoC.tolist(),
+            'EV_load': EV_load.tolist()}
     return data
 
 
-def excesspowerflow(Pexcess, EV_P_max, EV_E_left, EV_E_over, H_E_left, H_E_over, H_P_max, H_eff, EV_eff, EV_E_commute):
-    Pgrid = PH = PEV = 0
-    if Pexcess > 0:  # this means the batteries will have an incoming power flow
-        enough_power = Pexcess < EV_P_max
-        enough_energy = Pexcess < EV_E_left
-        if enough_energy and enough_power:
-            PEV = -Pexcess
-        elif enough_energy and not enough_power:
-            PEV = - EV_P_max
-            Pexcess = Pexcess - EV_P_max
-            enough_power = Pexcess < H_P_max
-            enough_energy = Pexcess < H_E_left
-            if enough_power and enough_energy:
-                PH = -Pexcess
-            elif enough_energy and not enough_power:
-                Pgrid = H_P_max - Pexcess
-                PH = -H_P_max
-            else:
-                Pgrid = -Pexcess
-        else:  # EV doesnt have enough energy so start looking at hydrogen
-            enough_power = Pexcess < H_P_max
-            enough_energy = Pexcess < H_E_left
-            if enough_power and enough_energy:
-                PH = -Pexcess
-            elif enough_energy and not enough_power:
-                Pgrid = H_P_max - Pexcess
-                PH = -H_P_max
-            else:
-                Pgrid = -Pexcess
-        PH * H_eff  # the efficiency conversion sqrt(eff) is applied twice at the conversion to storage
-        PEV * EV_eff
-    else:  # if Pexcess is negative or 0, so the batteries are discharging
-        Pexcess = abs(Pexcess)
-        enough_power = Pexcess < EV_P_max
-        enough_energy = Pexcess < EV_E_over
-        if enough_energy and enough_power:
-            PEV = Pexcess  # this creates positive EV power flow so it's extracting power from the EV
-        elif enough_energy and not enough_power:
-            PEV = EV_P_max
-            Pexcess = Pexcess - EV_P_max
-            enough_power = Pexcess < H_P_max
-            enough_energy = Pexcess < H_E_over
-            if enough_power and enough_energy:
-                PH = Pexcess
-            elif enough_energy and not enough_power:
-                Pgrid = Pexcess - H_P_max
-                PH = H_P_max
-            else:
-                Pgrid = Pexcess
-        else:  # EV doesnt have enough energy so start looking at hydrogen
-            enough_power = Pexcess < H_P_max
-            enough_energy = Pexcess < H_E_over
-            if enough_power and enough_energy:
-                PH = Pexcess
-            elif enough_energy and not enough_power:
-                Pgrid = Pexcess - H_P_max
-                PH = H_P_max
-            else:
-                Pgrid = Pexcess
-    if EV_E_over < 0:  # this case is when cars are too low
-        Pgrid = Pgrid + EV_E_commute*2 #add two trips worth for all cars from the grid to EV
-        PEV = PEV - EV_E_commute*2
-    return Pgrid, PH, PEV
-
-
 if __name__ == '__main__':
-    powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-              'power_solar': [3, 6, 3, 6, 7, 7, 0, 0, 0, 0, 0, 0, -120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
-    a = power_battery(powers, N_EV=5)
+    with open('powers.txt', 'r') as outfile:
+        powers = json.load(outfile)
+    # powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #           'power_solar': [3, 6, 30, 60, 70, 7, 0, 0, 0, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
+    a = power_battery(powers, N_EV=30)
