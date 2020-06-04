@@ -69,10 +69,15 @@ app.layout = html.Div(children=[
     dcc.Input(id='input load', value=160, type='number'),
     html.Button('Refresh', id='buttonload', n_clicks=0),
     html.Div(id='output-pv'),
-    dcc.Graph(id='pvpower'),
-    dcc.Graph(id='loadpower'),
-    dcc.Graph(id='piechart'),
-    dcc.Graph(id='emissions')
+    dcc.Graph(id='pvpower', animate=True),
+    dcc.Graph(id='loadpower', animate=True),
+    dcc.Graph(id='piechart', animate=True),
+    dcc.Graph(id='emissions', animate=True),
+    dcc.Interval(
+        id='interval-component',
+        interval=1*1000,
+        n_intervals=0
+    )
 
 ])
 
@@ -85,12 +90,8 @@ def dash_update_solar(dict):
 
 #-------------------pv figure---------------------------------------------------------------
 @app.callback(Output('pvpower', 'figure'),
-              [Input('button', 'n_clicks')],
-              state=[State('input', 'value'),
-                     State('dropdown', 'value')
-                     ])
-def update_graph_live(n, z, k):
-    time.sleep(1.3)#1.3 needed for the pi, (pi exe time is 1.1)
+              [Input('interval-component', 'n_intervals')])
+def update_graph_solar(n):
     figure = {
         'data': [
             {'x': dh['time'], 'y': dh['power_solar'], 'type': 'line', 'name': 'PV'}
@@ -105,17 +106,12 @@ def update_graph_live(n, z, k):
             }
         }
     }
-
     return figure
 
 #-------------------load figure---------------------------------------------------------------
 @app.callback(Output('loadpower', 'figure'),
-              [Input('buttonload', 'n_clicks')],
-              state=[State('input load', 'value'),
-                     State('dropdownhousehold', 'value')
-                     ])
-def update_graph_live_load(n, z, k):
-    time.sleep(0.6)
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_load(n):
     figure = {
         'data': [
             {'x': dh['time'], 'y': dh['power_load'], 'type': 'line', 'name': 'load'}
@@ -135,9 +131,8 @@ def update_graph_live_load(n, z, k):
 
 #-------------------pie chart---------------------------------------------------------------
 @app.callback(Output('piechart', 'figure'),
-              [Input('buttonload', 'n_clicks'), Input('button', 'n_clicks')])
-def update_graph_live_pie(n, z,):
-    time.sleep(0.6)
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_pie(n):
     dx=({'wind': [10000, 2, 5, 3, 2, 0],
     'net': [100000, 2, 5, 0, 2, 0]})
     tot_net = sum(dx['net'])
@@ -157,9 +152,8 @@ def update_graph_live_pie(n, z,):
 
 #-------------------emissions figure---------------------------------------------------------------
 @app.callback(Output('emissions', 'figure'),
-              [Input('buttonload', 'n_clicks'), Input('button', 'n_clicks')])
-def update_graph_live_emissions(n, z,):
-    time.sleep(0.6)
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_emissions(n):
     dx=({'wind': [10000, 2, 5, 3, 2, 0],
     'net': [100000, 2, 5, 0, 2, 0]})
     tot_net = sum(dx['net'])
