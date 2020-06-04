@@ -6,11 +6,14 @@ from Client import hhub
 def actuator_hhub(hour, powers, on):
     if on:                                          # turn on actuator signal
         if 'power_solar' in powers:
-            power_min = min(powers)
-            power_max = max(powers)
+            power = powers['power_solar']
+            powertype = 'SOLARPV'
+            power_min = min(power)
+            power_max = max(power)
             for x in range(hour, len(powers)):
                 power = powers[x]
-                hhub.setModel(power, hhub.Model.SOLARPV, power_min, power_max)
+                hhub.setModel(power, hhub.Model.powertype, power_min, power_max)
+
                 sleep(1)
         if 'power_wind' in powers:
             power_min = min(powers)
@@ -30,29 +33,29 @@ def actuator_hhub(hour, powers, on):
 
 def sensor_hhub(hour, powers, on):
     if on:
-        if hour:
-            if 'power_solar' in powers:
-                power_min = min(powers)
-                power_max = max(powers)
-                for x in range(hour, len(powers)):
-                    power_of_hour = hhub.getModel(hhub.Model.SOLARPV, power_min, power_max)
-                    new_power = powers.insert(hour, power_of_hour)
-                    sleep(1)
-            if 'power_wind' in powers:
-                power_min = min(powers)
-                power_max = max(powers)
-                for x in range(hour, len(powers)):
-                    power_of_hour = hhub.getModel(hhub.Model.WINDTURBINE, power_min, power_max)
-                    new_power = powers.insert(hour, power_of_hour)
-                    sleep(1)
-            if 'power_load' in powers:
-                power_min = min(powers)
-                power_max = max(powers)
-                for x in range(hour, len(powers)):
-                    power_of_hour = hhub.getModel(hhub.Model.HOUSEHOLD, power_min, power_max)
-                    new_power = powers.insert(hour, power_of_hour)
-                    sleep(1)
-    return new_power
+        powers_after_hour = powers.pop(hour, len(powers))
+        if 'power_solar' in powers:
+            power_min = min(powers)
+            power_max = max(powers)
+            for x in range(hour, len(powers)):
+                power_of_hour = hhub.getModel(hhub.Model.SOLARPV, power_min, power_max)
+                new_power = powers.insert(hour, power_of_hour)
+                sleep(1)
+        if 'power_wind' in powers:
+            power_min = min(powers)
+            power_max = max(powers)
+            for x in range(hour, len(powers)):
+                power_of_hour = hhub.getModel(hhub.Model.WINDTURBINE, power_min, power_max)
+                new_power = powers.insert(hour, power_of_hour)
+                sleep(1)
+        if 'power_load' in powers:
+            power_min = min(powers)
+            power_max = max(powers)
+            for x in range(hour, len(powers)):
+                power_of_hour = hhub.getModel(hhub.Model.HOUSEHOLD, power_min, power_max)
+                new_power = powers.insert(hour, power_of_hour)
+                sleep(1)
+    return new_power, powers_after_hour
 
 
 
