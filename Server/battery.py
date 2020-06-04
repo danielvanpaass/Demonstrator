@@ -185,20 +185,13 @@ def power_battery(powers, N_EV):
     return data
 
 
-def power_battery_realtime(actuator_powers, year_data, hour):
-    if 'power_load_rt' in actuator_powers:
-        power_load = actuator_powers['power_load_rt']
-    else:
-        power_load = year_data['power_load'][hour]
+def power_battery_realtime(actuator_powers, hour):
     power_source = 0
     if 'power_solar_rt' in actuator_powers:
         power_source += actuator_powers['power_solar_rt']
-    else:
-        power_source += year_data['power_solar'][hour]
     if 'power_wind_rt' in actuator_powers:
         power_source += actuator_powers['power_wind_rt']
-    else:
-        power_source += year_data['power_wind'][hour]
+    power_load = actuator_powers['power_load_rt']
     global global_hydrogen, global_cars
     N_EV = len(global_cars)
     excess_power = power_source - power_load
