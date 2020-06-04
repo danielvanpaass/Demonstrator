@@ -7,7 +7,6 @@ PV_PARAMETERS = {
     'RSM72-6-360M': {'length': 1.956, 'width': 0.992, 'efficiency': 0.186, 't_coefficient': -0.39},
     'HIT-N245SE10': {'length': 1.580, 'width': 0.798, 'efficiency': 0.194, 't_coefficient': -0.258},
     'JAP60S01-290/SC': {'length': 1.689, 'width': 0.996, 'efficiency': 0.171, 't_coefficient': -0.37},
-    'Type4': {'length': 2500, 'width': 8.5, 'efficiency': 12, 't_coefficient': 3.0},
 }
 
 

@@ -22,14 +22,15 @@ def on_message(client, userdata, message):
     hhub_powers = {}
     print("message received ", str(m))
     print("message topic=", message.topic)
+
     if wind:
         print('wind')
         try:
-            type_turbine = m['turbine_type']
+            turbine_type = m['turbine_type']
         except:
-            type_turbine = "WES5"
+            turbine_type = "WES5"
             print('no turbine specified')
-        calculation = power_calc.power_out_wind(type_turbine)
+        calculation = power_calc.power_out_wind(turbine_type)
         hhub_powers.update(json.loads(calculation))
         client.publish("to_dash", calculation)
     if solar:
