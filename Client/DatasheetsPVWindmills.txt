@@ -18,6 +18,11 @@ http://www.urbanwind.net/pdf/CATALOGUE_V2.pdf {wes5}
 
 Pvpanels:
 
+Polycrystalline 290Wp:
+https://solargarant.nl/zonnepanelen/polykristallijn/ja-solar/ja-solar-poly-290-wp-half-cell-zonnepaneel/
+Mono cryrstaline 360Wp:
+https://solardistri.nl/wp-content/uploads/2018/08/Datasheet-RSM72_6_360M_380M.pdf
+Mono crystalline 245Wp:
 https://www.zonnepanelen-xtra.nl/imagenew/pdf2017/panasonic-n245_240_nl.pdf
 
-https://solardistri.nl/wp-content/uploads/2018/08/Datasheet-RSM72_6_360M_380M.pdf
+
