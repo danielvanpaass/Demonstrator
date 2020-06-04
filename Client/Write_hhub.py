@@ -1,60 +1,58 @@
 from time import sleep
-import numpy
 from Client import hhub
 
 
-def actuator_hhub(hour, powers, on):
-    if on:                                          # turn on actuator signal
-        if 'power_solar' in powers:
-            power = powers['power_solar']
-            power_min = min(power)
-            power_max = max(power)
-            for x in range(hour, len(powers)):
-                power = powers[x]
-                hhub.setModel(power, hhub.Model.SOLARPV, power_min, power_max)
-                sleep(1)
-        if 'power_wind' in powers:
-            power_min = min(powers)
-            power_max = max(powers)
-            for x in range(hour, len(powers)):
-                power = powers[x]
-                hhub.setModel(power, hhub.Model.WINDTURBINE, power_min, power_max)
-                sleep(1)
-        if 'power_load' in powers:
-            power_min = min(powers)
-            power_max = max(powers)
-            for x in range(hour, len(powers)):
-                power = powers[x]
-                hhub.setModel(power, hhub.Model.HOUSEHOLD, power_min, power_max)
-                sleep(1)
+def actuator_hhub(hour, powers, wind, solar, load):
+    if solar:
+        power = powers['power_solar']
+        power_min = min(power) #the maxes will be calculated every time, this could be done once every new power list
+        power_max = max(power)
+        power = power[hour]
+        hhub.setModel(power, hhub.Model.SOLARPV, power_min, power_max)
+    if wind:
+        power = powers['power_wind']
+        power_min = min(power)
+        power_max = max(power)
+        power = power[hour]
+        hhub.setModel(power, hhub.Model.WINDTURBINE, power_min, power_max)
+    if load:
+        power = powers['power_load']
+        power_min = min(power)
+        power_max = max(power)
+        power = power[hour]
+        hhub.setModel(power, hhub.Model.HOUSEHOLD, power_min, power_max)
 
 
-def sensor_hhub(hour, powers, on):
-    if on:
-        powers_after_hour = powers.pop(hour, len(powers))
-        if 'power_solar' in powers:
-            power_min = min(powers)
-            power_max = max(powers)
-            for x in range(hour, len(powers)):
-                power_of_hour = hhub.getModel(hhub.Model.SOLARPV, power_min, power_max)
-                new_power = powers.insert(hour, power_of_hour)
-                sleep(1)
-        if 'power_wind' in powers:
-            power_min = min(powers)
-            power_max = max(powers)
-            for x in range(hour, len(powers)):
-                power_of_hour = hhub.getModel(hhub.Model.WINDTURBINE, power_min, power_max)
-                new_power = powers.insert(hour, power_of_hour)
-                sleep(1)
-        if 'power_load' in powers:
-            power_min = min(powers)
-            power_max = max(powers)
-            for x in range(hour, len(powers)):
-                power_of_hour = hhub.getModel(hhub.Model.HOUSEHOLD, power_min, power_max)
-                new_power = powers.insert(hour, power_of_hour)
-                sleep(1)
-    return new_power, powers_after_hour
+def sensor_hhub(hour, powers, wind, solar, load):
+    data_out_rt = {}
+    if solar:
+        power = powers['power_solar']
+        power_min = min(power)
+        power_max = max(power)
+        output = hhub.getModel(hhub.Model.SOLARPV, power_min, power_max)
+        if output == -1:
+            output =power[hour]
+        data_out_rt.update({'solar_power_rt': output})
+        powers['power_solar'][hour]=output #this replaces the element within the list of the full year as well
+    if wind:
+        power = powers['power_wind']
+        power_min = min(power)
+        power_max = max(power)
+        output = hhub.getModel(hhub.Model.WINDTURBINE, power_min, power_max)
+        if output == -1:
+            output =power[hour]
+        data_out_rt.update({'wind_power_rt': output})
+        powers['power_wind'][hour]=output #this replaces the element within the list of the full year as well
 
-
-
-
+    sleep(0.008)
+    if load:
+        power = powers['power_load']
+        power_min = min(power)
+        power_max = max(power)
+        output = hhub.getModel(hhub.Model.HOUSEHOLD, power_min, power_max)
+        if output == -1:
+            output =power[hour]
+        data_out_rt.update({'load_power_rt': output})
+        powers['power_load'][hour]=output #this replaces the element within the list of the full year as well
+    data_out_rt.update({'hour_simul': hour})
+    return data_out_rt, powers
