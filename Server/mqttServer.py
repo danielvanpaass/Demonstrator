@@ -4,9 +4,9 @@ import paho.mqtt.client as mqtt
 import maindash
 
 try:
-    import battery
-except:
     from Server import battery
+except:
+    import battery
 
 
 def on_connect(client, userdata, flags, rc):
@@ -21,7 +21,6 @@ def on_message(client, userdata, message):
     m = message.payload.decode("utf-8")
     received_data = json.loads(m)
     data_in.update(received_data)
-    dataaa = data_in
     print(received_data)
     if 'power_load' in received_data:
         print('hi')
@@ -31,9 +30,11 @@ def on_message(client, userdata, message):
         data_in.update(batteries)
     if 'hour_simul' in received_data:
         hour_simul = received_data['hour_simul']
-        actuator_data = received_data['actuator_data']
+        actuator_data = received_data['actuator_data'] #extracts a dictionary from dictionary
         year_data = data_in
-        battery = battery.power_battery_realtime(actuator_data, year_data, hour_simul, N_EV = 30)
+        batteries_rt = battery.power_battery_realtime(actuator_data, year_data, hour_simul)
+        data_in.update(batteries_rt)
+        client.publish("to_clients", json.dumps(batteries_rt))
     maindash.dash_update_solar(data_in)
     # m = message.payload.decode("utf-8")
     # with open('data.json', 'w', encoding='utf-8') as f:
