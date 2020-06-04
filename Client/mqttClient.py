@@ -19,16 +19,20 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, message):
     m = json.loads(message.payload.decode("utf-8"))
+    hhub_powers = {}
     print("message received ", str(m))
     print("message topic=", message.topic)
-    if(wind):
+
+    if wind:
         print('wind')
         try:
-            type_turbine = m['turbine_type']
+            turbine_type = m['turbine_type']
         except:
-            type_turbine = "WES5"
+            turbine_type = "WES5"
             print('no turbine specified')
-        client.publish("to_dash", power_calc.power_out_wind(type_turbine))
+        calculation = power_calc.power_out_wind(turbine_type)
+        hhub_powers.update(json.loads(calculation))
+        client.publish("to_dash", calculation)
     if solar:
         print('solar')
         try:
@@ -38,17 +42,23 @@ def on_message(client, userdata, message):
             print('no pvpanel specified')
         tilt_panel = m['tilt_panel']  # choice between 30,35 and 40 degrees
         N_solar = m['N_solar']
-
-        client.publish("to_dash", power_calc.power_out_solar(N_solar,tilt_panel,type_pvpanel))
-    if load:
+        calculation = power_calc.power_out_solar(N_solar,tilt_panel,type_pvpanel)
+        hhub_powers.update(json.loads(calculation))
+        client.publish("to_dash", calculation)
+    if load:#it is important that load is sent back last, because the battery calculation will wait for this to start
         try:
             load_type = m['load_type']
         except:
             load_type = "saving"
             print('no load type specified')
         N_load = m['N_load']
-        client.publish("to_dash", power_calc.power_out_load(N_load,load_type))
-
+        time.sleep(0.08)
+        calculation = power_calc.power_out_load(N_load,load_type)
+        hhub_powers.update(json.loads(calculation))
+        client.publish("to_dash", calculation)
+    if m['hhub_hour']>0:
+        pass
+        # hhub(hhub_powers, m['hhub_hour'])
     # simu_hour = decoded['simu_hour']
     # pass simu_hour to HHUB
 
@@ -63,8 +73,8 @@ def getMAC(interface='eth0'):
 
 
 #broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
-#broker_address="test.mosquitto.org" #use external broker
-broker_address="mqtt.eclipse.org" #use external broker
+broker_address="test.mosquitto.org" #use external broker
+# broker_address="mqtt.eclipse.org" #use external broker
 
 # instantiate client with MAC client ID for the session
 client = mqtt.Client(getMAC('eth0'))
@@ -84,9 +94,9 @@ while True:
         wind,solar = ReadUsbPi.connected_usb()#gives wind = 1,0 and solar = 1,0
         load = 1
     else:
-        wind = 0
+        wind = 1
         solar = 1
-        load = 0
+        load = 1
 
 # client.publish("demon/data",power_out(600))
 # client.publish("demon/data","OFF")#publish
