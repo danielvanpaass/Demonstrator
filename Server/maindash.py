@@ -13,7 +13,7 @@ start = 0.0
 end = 0.0
 data = {}
 dh = {'power_solar': [1, 2, 3],
-      'power_load': [1, 2, 3],}
+      'power_load': [0]*8760}
 
 labels=['PV','Wind','Natural Gas','Coal','Oil','Nuclear','Other']
 

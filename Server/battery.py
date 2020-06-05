@@ -7,9 +7,9 @@ class Car():
     def __init__(self, SoC):
         self.SoC = SoC
         # self.working = 0  # all cars home
-        self.powerMax = 8  # takes roughly 4 hours to charge car fully with level 2 station
-        self.energyMax = 30
-        self.energyMin = 5  # enough for 1 more round trip to work
+        self.powerMax = 6.6  # with level 2 station
+        self.energyMax = 56
+        self.energyMin = 0.1*56  # enough for 1 more round trip to work
         self.currentEnergy = SoC * self.energyMax
         self.workdays = random.sample(range(5), 3) + [
             (random.randint(5, 6))]  # every car leaves home 3x from workdays, + 1 in the weekend, 0 means monday
@@ -187,11 +187,11 @@ def power_battery(powers, N_EV):
 
 def power_battery_realtime(actuator_powers, hour):
     power_source = 0
-    if 'power_solar_rt' in actuator_powers:
-        power_source += actuator_powers['power_solar_rt']
-    if 'power_wind_rt' in actuator_powers:
-        power_source += actuator_powers['power_wind_rt']
-    power_load = actuator_powers['power_load_rt']
+    if 'power_solar' in actuator_powers:
+        power_source += actuator_powers['power_solar']
+    if 'power_wind' in actuator_powers:
+        power_source += actuator_powers['power_wind']
+    power_load = actuator_powers['power_load']
     global global_hydrogen, global_cars
     N_EV = len(global_cars)
     excess_power = power_source - power_load
@@ -257,9 +257,9 @@ def power_battery_realtime(actuator_powers, hour):
     excess_power = np.around(excess_power_out, 3)
     H_SoC = np.around(H_SoC_out, 3)
     EV_load = np.around(EV_load_out, 3)
-    data = {'power_grid_rt': Pgrid.tolist(), 'power_EV_rt': PEV.tolist(), 'power_hydrogen_rt': PH.tolist(),
-            'EV_SoC_rt': EV_SoC.tolist(), 'excess_power_rt': excess_power.tolist(), 'H_SoC_rt': H_SoC.tolist(),
-            'EV_load_rt': EV_load.tolist(), 'hour': hour}
+    data = {'power_grid': Pgrid.tolist(), 'power_EV': PEV.tolist(), 'power_hydrogen': PH.tolist(),
+            'EV_SoC': EV_SoC.tolist(), 'excess_power': excess_power.tolist(), 'H_SoC': H_SoC.tolist(),
+            'EV_load': EV_load.tolist(), 'hour': hour}
     return data
 
 
@@ -269,5 +269,5 @@ if __name__ == '__main__':
     # powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     #           'power_solar': [100, 116, 130, 160, 170, 17, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
     b = power_battery(powers, N_EV=1)
-    actuator_powers = {'power_load_rt':5, 'power_wind_rt':10}
-    a = power_battery_realtime(actuator_powers,powers, 0)
+    actuator_powers = {'power_load':5, 'power_wind':10}
+    a = power_battery_realtime(actuator_powers, 0)

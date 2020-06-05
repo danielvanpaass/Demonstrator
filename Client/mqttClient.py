@@ -50,34 +50,38 @@ def on_message(client, userdata, message):
         calculation = power_calc.power_out_solar(N_solar, tilt_panel, type_pvpanel)
         hhub_powers.update(json.loads(calculation))
         client.publish("year_data", calculation)
-    global hour_SoC
+    global hour_SoC, hour
     if hydrogen:
         print('hydrogen')
         try:
             H_SoC = m['H_SoC']
-            H_SoC_rt = m['H_SoC_rt']
+            H_SoC_rt = m['H_SoC']
             hour_rt = m['hour']
         except:
             H_SoC = [0] * 8760
             H_SoC_rt = 0
             hour_rt = 0
             print('no H SoC from server')
-        hhub_powers.update({'H_SoC': H_SoC, 'H_SoC_rt': H_SoC_rt})
+        hhub_powers.update({'H_SoC': H_SoC})
+        battery_rt.update({'H_SoC_rt': H_SoC_rt})
         if (not EV):  # if EV is not present, we can already start putting in the hour for the actuators
             hour_SoC = hour_rt
     if EV:
         print('EV')
         try:
             EV_SoC = m['EV_SoC']
-            EV_SoC_rt = m['H_SoC_rt']
+            EV_SoC_rt = m['H_SoC']
             hour_rt = m['hour']
         except:
             EV_SoC = [0] * 8760
             EV_SoC_rt = 0
-            hour_rt = 0
+            hour_rt = -99
             print('no EV SoC from server')
-        hhub_powers.update({'EV_SoC': EV_SoC, 'EV_SoC_rt': EV_SoC_rt})
+        hhub_powers.update({'EV_SoC': EV_SoC})
+        battery_rt.update({'EV_SoC_rt': EV_SoC_rt})
         hour_SoC = hour_rt
+    else:
+        hour_SoC = hour
     time.sleep(0.08)
     if load:  # it is important that load is sent back last, because the battery calculation will wait for this to start
         try:
@@ -89,7 +93,6 @@ def on_message(client, userdata, message):
         calculation = power_calc.power_out_load(N_load, load_type)
         hhub_powers.update(json.loads(calculation))
         client.publish("year_data", calculation)
-    global hour
     if 'hhub_hour' in m:
         hour = m['hhub_hour']
 
@@ -119,8 +122,9 @@ client.on_message = on_message
 client.connect(broker_address)
 # initialize variables
 hhub_powers = {}
-hour = -1
-hour_SoC = -1
+battery_rt = {}
+hour = -99
+hour_SoC = -99
 # in the loop, call back functions can be activated
 client.loop_start()
 client.subscribe("to_clients")
@@ -135,13 +139,12 @@ while True:
         wind = 1
         solar = 1
         load = 1
-        hydrogen = 1
-        EV = 1
+        hydrogen = 0
+        EV = 0
     if hour > -1:
         sensor_data_rt, updated_powers_year = write_hhub.sensor_hhub(hour, hhub_powers, wind, solar, load)
         client.publish("realtime_data", sensor_data_rt)
         while hour != hour_SoC:
             time.sleep(0.05)
-        write_hhub.actuator_hhub(hour, updated_powers_year, wind, solar, load)
-        if hour!=-1:
-            hour += 1
+        write_hhub.actuator_hhub(hour, updated_powers_year, wind, solar, load, EV, hydrogen)
+        hour += 1

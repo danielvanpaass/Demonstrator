@@ -29,12 +29,16 @@ def on_message(client, userdata, message):
             client.publish("to_clients", json.dumps(SoC))
     if topic == "realtime_data":
         realtime_data.update(received_data)
-        if 'power_load_rt' in received_data:
+        if 'power_load' in received_data:
             hour_simul = received_data['hour_simul']
             batteries_rt = battery.power_battery_realtime(received_data, hour_simul)
-            year_data.update(batteries_rt)
-            SoC_rt = {'EV_SoC_rt': batteries_rt['EV_SoC_rt'], 'H_SoC_rt': batteries_rt['H_SoC_rt']}
+            SoC_rt = {'EV_SoC': batteries_rt['EV_SoC'], 'H_SoC': batteries_rt['H_SoC']}
             client.publish("to_clients", json.dumps(SoC_rt))
+            for key in list(received_data.keys()):
+                if key != 'hour_simul':
+                    year_data[key][hour_simul]=received_data[key]
+
+
     maindash.dash_update_solar(year_data)
     # m = message.payload.decode("utf-8")
     # with open('data.json', 'w', encoding='utf-8') as f:
