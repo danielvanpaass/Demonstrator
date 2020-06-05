@@ -245,7 +245,7 @@ def power_battery_realtime(actuator_powers, hour):
             excess_power = excess_power + power_taken
             PH_out = power_taken
         if abs(excess_power) > 0.001:
-            power_taken = -excess_power  # from grid
+            power_taken = excess_power  # from grid
             Pgrid_out = power_taken
     EV_SoC_out = 0.0
     for i in range(0, N_EV):
@@ -265,10 +265,10 @@ def power_battery_realtime(actuator_powers, hour):
 
 
 if __name__ == '__main__':
-    #with open('powers.txt', 'r') as outfile:
-        # powers = json.load(outfile)
-    powers = {'power_solar': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-              'power_load': [100, 116, 130, 160, 170, 17, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
+    with open('powers.txt', 'r') as outfile:
+        powers = json.load(outfile)
+    # powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #           'power_solar': [100, 116, 130, 160, 170, 17, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
     b = power_battery(powers, N_EV=1)
     actuator_powers = {'power_load':5, 'power_wind':10}
     a = power_battery_realtime(actuator_powers, 0)
