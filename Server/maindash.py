@@ -89,6 +89,7 @@ def dash_update_solar(dict):
                      ])
 def update_graph_live(n, z, k):
     time.sleep(0.6)
+    print(sum(dh['power_solar']))
     figure = {
         'data': [
             {'x': dh['time'], 'y': dh['power_solar'], 'type': 'line', 'name': 'PV'}
