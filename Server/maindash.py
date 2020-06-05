@@ -328,7 +328,7 @@ def update_graph_live_emissions(n):
 
 #------------------------MQTT--------------------------------------------------------------------
 
-def connect_and_run_dash(client):
+def connect_and_run_dash(client, N_EV):
     @app.callback(
         Output(component_id='output-pv', component_property='children'),
         [Input('button', 'n_clicks'), Input('buttonload', 'n_clicks'), Input('buttonev', 'n_clicks')],
@@ -348,6 +348,7 @@ def connect_and_run_dash(client):
         client.publish("to_clients", json.dumps(data))
         global start
         start = time.time()
+        N_EV.setValue(loadvalue)
 
 
     app.run_server(debug=False)

@@ -168,7 +168,7 @@ def power_battery(powers, N_EV):
                 PH_out[x] = power_taken
                 excess_power = excess_power + power_taken
             if abs(excess_power) > 0.001:
-                power_taken = excess_power
+                power_taken = -excess_power
                 Pgrid_out[x] = power_taken
         for i in range(0, N_EV):
             EV_SoC_out[x] = EV_SoC_out[x] + cars[i].getSoC() / N_EV  # store the average SoC
@@ -245,7 +245,7 @@ def power_battery_realtime(actuator_powers, hour):
             excess_power = excess_power + power_taken
             PH_out = power_taken
         if abs(excess_power) > 0.001:
-            power_taken = excess_power  # from grid
+            power_taken = -excess_power  # from grid
             Pgrid_out = power_taken
     EV_SoC_out = 0.0
     for i in range(0, N_EV):

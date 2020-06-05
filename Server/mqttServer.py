@@ -1,7 +1,10 @@
 import json
 import paho.mqtt.client as mqtt
 
-import maindash
+try:
+    from Server import maindash
+except:
+    import maindash
 
 try:
     from Server import battery
@@ -23,7 +26,8 @@ def on_message(client, userdata, message):
     if topic == "year_data":
         year_data.update(received_data)
         if 'power_load' in received_data:
-            batteries = battery.power_battery(year_data, N_EV=30)
+            N_EV = number_EV.getValue()
+            batteries = battery.power_battery(year_data, N_EV)
             year_data.update(batteries)
             SoC = {'EV_SoC': batteries['EV_SoC_rt'], 'H_SoC': batteries['H_SoC_rt']}
             client.publish("to_clients", json.dumps(SoC))
@@ -49,7 +53,14 @@ def getMAC(interface='eth0'):
         str = 'alias_server_notpi'
     return str[0:17]
 
-
+class N_EV():
+    def __init__(self, value):
+        self.value = value
+    def setValue(self, value):
+        self.value = value
+    def getValue(self):
+        return self.value
+number_EV = N_EV(30)
 year_data = {}
 realtime_data = {}
 
@@ -73,6 +84,6 @@ client.subscribe("year_data")
 client.subscribe('realtime_data')
 # initial publish of power values
 while True:
-    maindash.connect_and_run_dash(client)
+    maindash.connect_and_run_dash(client, number_EV)
 # client.publish("demon/data",power_out(600))
 # client.publish("demon/data","OFF")#publish
