@@ -9,7 +9,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
-
+start = 0.0
+end = 0.0
 data = {}
 dh = {'power_solar': [1, 2, 3],
       'power_load': [1, 2, 3],}
@@ -57,9 +58,6 @@ app.layout = html.Div(children=[
     html.H3('Load Parameters',
             style={'color': colors['text']}),
     html.Div('Number of houses in the neighbourhood'),
-    dcc.Input(id='input load', value=160, type='number'),
-    html.Button('Refresh', id='buttonload', n_clicks=0),
-    html.Div('Type of Households'),
     dcc.Dropdown(
         id='dropdownhousehold',
         options=[
@@ -68,11 +66,18 @@ app.layout = html.Div(children=[
         ],
         value='average'
     ),
+    dcc.Input(id='input load', value=160, type='number'),
+    html.Button('Refresh', id='buttonload', n_clicks=0),
     html.Div(id='output-pv'),
-    dcc.Graph(id='pvpower'),
-    dcc.Graph(id='loadpower'),
-    dcc.Graph(id='piechart'),
-    dcc.Graph(id='emissions')
+    dcc.Graph(id='pvpower', animate=True),
+    dcc.Graph(id='loadpower', animate=True),
+    dcc.Graph(id='piechart', animate=True),
+    dcc.Graph(id='emissions', animate=True),
+    dcc.Interval(
+        id='interval-component',
+        interval=1*1000,
+        n_intervals=0
+    )
 
 ])
 
@@ -80,16 +85,13 @@ app.layout = html.Div(children=[
 def dash_update_solar(dict):
     global dh
     dh.update(dict)
+    end = time.time()
+    print(end - start)
 
 #-------------------pv figure---------------------------------------------------------------
 @app.callback(Output('pvpower', 'figure'),
-              [Input('button', 'n_clicks')],
-              state=[State('input', 'value'),
-                     State('dropdown', 'value')
-                     ])
-def update_graph_live(n, z, k):
-    time.sleep(0.6)
-    print(sum(dh['power_solar']))
+              [Input('interval-component', 'n_intervals')])
+def update_graph_solar(n):
     figure = {
         'data': [
             {'x': dh['time'], 'y': dh['power_solar'], 'type': 'line', 'name': 'PV'}
@@ -104,17 +106,12 @@ def update_graph_live(n, z, k):
             }
         }
     }
-
     return figure
 
 #-------------------load figure---------------------------------------------------------------
 @app.callback(Output('loadpower', 'figure'),
-              [Input('buttonload', 'n_clicks')],
-              state=[State('input load', 'value'),
-                     State('dropdownhousehold', 'value')
-                     ])
-def update_graph_live_load(n, z, k):
-    time.sleep(0.6)
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_load(n):
     figure = {
         'data': [
             {'x': dh['time'], 'y': dh['power_load'], 'type': 'line', 'name': 'load'}
@@ -134,9 +131,8 @@ def update_graph_live_load(n, z, k):
 
 #-------------------pie chart---------------------------------------------------------------
 @app.callback(Output('piechart', 'figure'),
-              [Input('buttonload', 'n_clicks'), Input('button', 'n_clicks')])
-def update_graph_live_pie(n, z,):
-    time.sleep(0.6)
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_pie(n):
     dx=({'wind': [10000, 2, 5, 3, 2, 0],
     'net': [100000, 2, 5, 0, 2, 0]})
     tot_net = sum(dx['net'])
@@ -156,9 +152,8 @@ def update_graph_live_pie(n, z,):
 
 #-------------------emissions figure---------------------------------------------------------------
 @app.callback(Output('emissions', 'figure'),
-              [Input('buttonload', 'n_clicks'), Input('button', 'n_clicks')])
-def update_graph_live_emissions(n, z,):
-    time.sleep(0.6)
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_emissions(n):
     dx=({'wind': [10000, 2, 5, 3, 2, 0],
     'net': [100000, 2, 5, 0, 2, 0]})
     tot_net = sum(dx['net'])
@@ -210,6 +205,9 @@ def connect_and_run_dash(client):
         data.update({'N_load': loadvalue})
         data.update({'load_type': loadtype})
         client.publish("to_clients", json.dumps(data))
+        global start
+        start = time.time()
+
 
     app.run_server(debug=False)
 

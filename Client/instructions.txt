@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-#For the client: it runs off the same system so apply only for 1 client  
+#For the client: it runs off the same system so apply only for 1 client
 sudo apt-get install python3-pip
 sudo pip3 install paho-mqtt
 sudo sed -i 's/raspberrypi/raspberrypiClient/g' /etc/hostname #this changes hostname of clients
@@ -23,4 +22,4 @@ sudo reboot
 =======
 paho-mqtt
 smbus
->>>>>>> 904bccae7ac31ede97967face6ac2f9deefafc82
+
