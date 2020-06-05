@@ -14,7 +14,6 @@ end = 0.0
 data = {}
 dh = {'power_solar': [1, 2, 3],
       'power_load': [0]*8760}
-
 labels=['PV','Wind','Natural Gas','Coal','Oil','Nuclear','Other']
 
 
@@ -193,7 +192,7 @@ def update_graph_live_emissions(n):
 
 #------------------------MQTT--------------------------------------------------------------------
 
-def connect_and_run_dash(client):
+def connect_and_run_dash(client, N_EV):
     @app.callback(
         Output(component_id='output-pv', component_property='children'),
         [Input('button', 'n_clicks'), Input('buttonload', 'n_clicks')],
@@ -206,6 +205,7 @@ def connect_and_run_dash(client):
         data.update({'load_type': loadtype})
         client.publish("to_clients", json.dumps(data))
         global start
+        N_EV.setValue(loadvalue)
         start = time.time()
 
 

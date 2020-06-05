@@ -89,6 +89,7 @@ global_cars = []
 
 
 def power_battery(powers, N_EV):
+    print(N_EV)
     global global_cars, global_hydrogen
     global_cars = []
     global_hydrogen.resetSoC(0.5)
