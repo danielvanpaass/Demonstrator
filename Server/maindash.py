@@ -13,10 +13,29 @@ start = 0.0
 end = 0.0
 data = {}
 dh = {'power_solar': [1, 2, 3],
-      'power_load': [1, 2, 3],}
+      'power_load': [1, 2, 3],
+      'power_wind': [1, 2, 3],
+      'power_grid': [1, 2, 3],
+      'EV_SoC': [1, 2, 3],
+      'H_SoC': [1, 2, 3],
+      }
 
 labels=['PV','Wind','Natural Gas','Coal','Oil','Nuclear','Other']
+labels_2=['Green', 'Grey', 'Unknown']
 
+def sumNegativeInts(listInt):
+    m = 0
+    for x in listInt:
+        if x < 0:
+            m+= x
+    return (int(m))
+
+def sumPositiveInts(listInt):
+    m = 0
+    for x in listInt:
+        if x > 0:
+            m += x
+    return(int(m))
 
 dh.update({'time': pd.date_range(start='2019-01-01 00:00', freq='1h', periods=8760)})
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -42,6 +61,15 @@ app.layout = html.Div(children=[
     html.Img(src='data:image/png;base64,{}'.format(test_base64)),
     html.H3('PV Parameters',
             style={'color': colors['text']}),
+    html.Div('PV module type'),
+    dcc.Dropdown(
+        id='dropdownpvtype',
+        options=[
+            {'label': 'HIT-N245SE10 Monocrystalline', 'value': 'HIT-N245SE10'},
+            {'label': 'JAP60S01-290/SC Polycrystalline', 'value': 'JAP60S01-290/SC'},
+        ],
+        value='HIT-N245SE10'
+    ),
     html.Div('Number of PV panels'),
     dcc.Input(id='input', value=20, type='number'),
     html.Button('Refresh', id='button', n_clicks=0),
@@ -54,6 +82,17 @@ app.layout = html.Div(children=[
             {'label': '40 degrees', 'value': 40}
         ],
         value=30
+    ),
+    html.H3('Wind Parameters',
+            style={'color': colors['text']}),
+    html.Div('Wind turbine model'),
+    dcc.Dropdown(
+        id='dropdownwind',
+        options=[
+            {'label': 'Aeolos10', 'value': 'Aeolos10'},
+            {'label': 'WES5', 'value': 'WES5'},
+        ],
+        value='Aeolos10'
     ),
     html.H3('Load Parameters',
             style={'color': colors['text']}),
@@ -68,14 +107,26 @@ app.layout = html.Div(children=[
     ),
     dcc.Input(id='input load', value=160, type='number'),
     html.Button('Refresh', id='buttonload', n_clicks=0),
+
+    html.H3('Battery Parameters',
+            style={'color': colors['text']}),
+    html.Div('Number of EV'),
+    dcc.Input(id='input EV', value=80, type='number'),
+    html.Button('Refresh', id='buttonev', n_clicks=0),
+
     html.Div(id='output-pv'),
     dcc.Graph(id='pvpower', animate=True),
+    dcc.Graph(id='windpower', animate=True),
     dcc.Graph(id='loadpower', animate=True),
+    dcc.Graph(id='EVpower', animate=True),
+    dcc.Graph(id='Hydrogen', animate=True),
+    dcc.Graph(id='gridpower', animate=True),
     dcc.Graph(id='piechart', animate=True),
-    dcc.Graph(id='emissions', animate=True),
+    dcc.Graph(id='piechartshare', animate=True),
+    #dcc.Graph(id='emissions', animate=True),
     dcc.Interval(
         id='interval-component',
-        interval=1*1000,
+        interval=2*1000,
         n_intervals=0
     )
 
@@ -108,6 +159,27 @@ def update_graph_solar(n):
     }
     return figure
 
+#-------------------Wind figure---------------------------------------------------------------
+@app.callback(Output('windpower', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_wind(n):
+    figure = {
+        'data': [
+            {'x': dh['time'], 'y': dh['power_wind'], 'type': 'line', 'name': 'Wind'}
+        ],
+        'layout': {
+            'title': 'Wind power output',
+            'xaxis': {
+                'title': 'Time'
+            },
+            'yaxis': {
+                'title': 'Power [kW]'
+            }
+        }
+    }
+    return figure
+
+
 #-------------------load figure---------------------------------------------------------------
 @app.callback(Output('loadpower', 'figure'),
               [Input('interval-component', 'n_intervals')])
@@ -128,16 +200,76 @@ def update_graph_live_load(n):
     }
     return figure
 
+#-------------------Battery---------------------------------------------------------------
+@app.callback(Output('EVpower', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_ev(n):
+    figure = {
+        'data': [
+            {'x': dh['time'], 'y': dh['EV_SoC'], 'type': 'line', 'name': 'Battery'}
+        ],
+        'layout': {
+            'title': 'Electric vehicle battery soc',
+            'xaxis': {
+                'title': 'Time'
+            },
+            'yaxis': {
+                'title': 'SoC [%]'
+            }
+        }
+    }
+    return figure
+
+
+#-------------------Battery---------------------------------------------------------------
+@app.callback(Output('Hydrogen', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_hydrogen(n):
+    figure = {
+        'data': [
+            {'x': dh['time'], 'y': dh['H_SoC'], 'type': 'line', 'name': 'Hydrotank'}
+        ],
+        'layout': {
+            'title': 'Hydrogen battery soc',
+            'xaxis': {
+                'title': 'Time'
+            },
+            'yaxis': {
+                'title': 'SoC [%]'
+            }
+        }
+    }
+    return figure
+
+
+#-------------------grid---------------------------------------------------------------
+@app.callback(Output('gridpower', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_load(n):
+    figure = {
+        'data': [
+            {'x': dh['time'], 'y': dh['power_grid'], 'type': 'line', 'name': 'grid'}
+        ],
+        'layout': {
+            'title': 'Grid Power flow',
+            'xaxis': {
+                'title': 'Time'
+            },
+            'yaxis': {
+                'title': 'Power [kW]'
+            }
+        }
+    }
+    return figure
+
 
 #-------------------pie chart---------------------------------------------------------------
 @app.callback(Output('piechart', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_live_pie(n):
-    dx=({'wind': [10000, 2, 5, 3, 2, 0],
-    'net': [100000, 2, 5, 0, 2, 0]})
-    tot_net = sum(dx['net'])
+    tot_net = sumPositiveInts(dh['power_grid'])
     tot_pv = sum(dh['power_solar']) + tot_net * 0.05
-    tot_wind = sum(dx['wind']) * 0.08
+    tot_wind = sum(dh['power_wind']) + tot_net* 0.08
     tot_gas = tot_net * 0.45
     tot_coal = tot_net * 0.32
     tot_oil = tot_net * 0.04
@@ -150,15 +282,33 @@ def update_graph_live_pie(n):
     return figure
 
 
+@app.callback(Output('piechartshare', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_pie(n):
+    tot_net = sumPositiveInts(dh['power_grid'])
+    tot_pv = sum(dh['power_solar']) + tot_net * 0.05
+    tot_wind = sum(dh['power_wind']) + tot_net* 0.08
+    tot_gas = tot_net * 0.45
+    tot_coal = tot_net * 0.32
+    tot_oil = tot_net * 0.04
+    tot_nuclear = tot_net * 0.03
+    tot_other = tot_net * 0.03
+    green = tot_pv + tot_wind
+    grey = tot_gas + tot_oil + tot_coal
+    other = tot_nuclear + tot_other
+    share = [green, grey, other]
+    figure = go.Figure(data=[go.Pie(labels=labels_2, values=share)])
+    figure.update_layout(
+        title_text="Green and grey ratio neigbourhood use")
+    return figure
+
 #-------------------emissions figure---------------------------------------------------------------
 @app.callback(Output('emissions', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_live_emissions(n):
-    dx=({'wind': [10000, 2, 5, 3, 2, 0],
-    'net': [100000, 2, 5, 0, 2, 0]})
-    tot_net = sum(dx['net'])
+    tot_net = sumPositiveInts(dh['power_grid'])
     tot_pv = sum(dh['power_solar']) + tot_net * 0.05
-    tot_wind = sum(dx['wind']) * 0.08
+    tot_wind = sum(dh['power_wind']) + tot_net * 0.08
     tot_gas = tot_net * 0.45
     tot_coal = tot_net * 0.32
     tot_oil = tot_net * 0.04
@@ -174,21 +324,6 @@ def update_graph_live_emissions(n):
 
     labels2 = ['PV', 'Wind', 'Natural Gas', 'Coal', 'Oil', 'Nuclear', 'Other']
     share2 = [tot_pv, tot_wind, tot_gas, tot_coal, tot_oil, tot_nuclear, tot_other]
-    fig = make_subplots(rows=1, cols=2, specs=[[{"type": "bar"}, {"type": "bar"}]])
-
-    fig.add_trace(go.Bar(name='Greenhouse gases [kg]',
-                         x=labels1, y=share1,
-                         ),
-                  row=1, col=1)
-    fig.update_layout(
-        title_text="Lifecycle Emission Analysis",
-        xaxis_title=" ",
-        yaxis_title="[kg]")
-    fig.add_trace(go.Bar(name='Carbon dioxide [kg]',
-                         x=labels2, y=share2,
-                         ),
-                  row=1, col=2,)
-    return fig
 
 
 #------------------------MQTT--------------------------------------------------------------------
@@ -196,14 +331,20 @@ def update_graph_live_emissions(n):
 def connect_and_run_dash(client):
     @app.callback(
         Output(component_id='output-pv', component_property='children'),
-        [Input('button', 'n_clicks'), Input('buttonload', 'n_clicks')],
-        state=[State('input', 'value'), State('dropdown', 'value'), State('input load', 'value'), State('dropdownhousehold', 'value')
+        [Input('button', 'n_clicks'), Input('buttonload', 'n_clicks'), Input('buttonev', 'n_clicks')],
+        state=[State('dropdownpvtype', 'value'),State('input', 'value'), State('dropdown', 'value'),
+               State('dropdownwind', 'value'),
+               State('input load', 'value'), State('dropdownhousehold', 'value'),
+               State('input EV', 'value')
                ], )
-    def update_output(n_clicks,n_click, panelvalue, tiltvalue, loadvalue, loadtype):
+    def update_output(n_clicks, n_click, n_clickbat, paneltype ,panelvalue, tiltvalue, turbinetype, loadvalue, loadtype, evvalue):
+        data.update({'pv_type': paneltype})
         data.update({'N_solar': panelvalue})
         data.update({'tilt_panel': tiltvalue})
+        data.update({'turbine_type': turbinetype})
         data.update({'N_load': loadvalue})
         data.update({'load_type': loadtype})
+        data.update({'N_EV': evvalue})
         client.publish("to_clients", json.dumps(data))
         global start
         start = time.time()

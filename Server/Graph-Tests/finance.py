@@ -30,3 +30,5 @@ totalyield = npf.npv(discountRate_decay, yearlyyield)
 LCOE_pv=((Initialcost_pv+ netpresent)/totalyield).round(3)
 
 print(LCOE_pv)
+fig = go.Figure([go.Bar(x=['PV','Wind'], y=[0.039, 0.047])])
+fig.show()

@@ -2,7 +2,7 @@ import plotly.graph_objects as go
 
 data = {'pv':[1,4,1,2,4,2],
          'wind':[1,2,5,3,2,0],
-        'net':[10,2,5,0,2,0]}
+        'net':[10,2,-5,0,2,0]}
 tot_net=  sum(data['net'])
 tot_pv =  sum(data['pv'])+tot_net*0.05
 tot_wind= sum(data['wind'])*0.08
@@ -19,5 +19,20 @@ share=[tot_pv,tot_wind,tot_gas,tot_coal,tot_oil,tot_nuclear,tot_other]
 fig = go.Figure(data=[go.Pie(labels=labels, values=share)])
 fig.show()
 
-#print(power_share)
+def sumNegativeInts(listInt):
+    m = 0
+    for x in listInt:
+        if x < 0:
+            m+=x
+    return(int(m))
+print(sumNegativeInts(data['net']))
+
+def sumPositiveInts(listInt):
+    m = 0
+    for x in listInt:
+        if x > 0:
+            m+=x
+    return(int(m))
+print(sumPositiveInts(data['net']))
+
 #data.update({'share': })

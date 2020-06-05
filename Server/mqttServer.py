@@ -55,7 +55,7 @@ realtime_data = {}
 
 # broker_address = "raspberrypi"  # server Pi name (you can also use IP address here)
 broker_address = "test.mosquitto.org"  # use external broker
-# broker_address = "mqtt.eclipse.org"  # use external broker
+#broker_address = "mqtt.eclipse.org"  # use external broker
 
 # instantiate client with MAC client ID for the session
 client = mqtt.Client(getMAC('eth0'))
