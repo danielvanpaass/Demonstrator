@@ -9,8 +9,6 @@ import pandas as pd
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
-start = 0.0
-end = 0.0
 data = {}
 dh = {'power_solar': [1, 2, 3],
       'power_load': [1, 2, 3],
@@ -41,6 +39,7 @@ dh.update({'time': pd.date_range(start='2019-01-01 00:00', freq='1h', periods=87
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets, suppress_callback_exceptions=True)
+
 colors = {
     'background': '#111111',
     'text': '#00A6D6'
@@ -106,14 +105,11 @@ app.layout = html.Div(children=[
         value='average'
     ),
     dcc.Input(id='input load', value=160, type='number'),
-    html.Button('Refresh', id='buttonload', n_clicks=0),
-
     html.H3('Battery Parameters',
             style={'color': colors['text']}),
     html.Div('Number of EV'),
     dcc.Input(id='input EV', value=80, type='number'),
-    html.Button('Refresh', id='buttonev', n_clicks=0),
-    html.Div(id='output-pv'),
+
 
     html.Div(children = [
     dcc.Graph(id='pvpower', animate=True),
@@ -131,7 +127,9 @@ app.layout = html.Div(children=[
         id='interval-component',
         interval=2*1000,#in miliseconds
         n_intervals=0
-    )
+    ),
+    # empty dummy div
+    html.Div(id='hidden-div', style={'display':'none'})
 
 ])
 
@@ -139,8 +137,8 @@ app.layout = html.Div(children=[
 def dash_update_solar(dict):
     global dh
     dh.update(dict)
-    end = time.time()
-    print(end - start)
+    print("received")
+
 
 @app.callback([
     Output('pvpower', 'animate'),
@@ -354,26 +352,51 @@ def update_graph_live_emissions(n):
 #------------------------MQTT--------------------------------------------------------------------
 
 def connect_and_run_dash(client, N_EV):
+
     @app.callback(
-        Output(component_id='output-pv', component_property='children'),
-        [Input('button', 'n_clicks'), Input('buttonload', 'n_clicks'), Input('buttonev', 'n_clicks')],
-        state=[State('dropdownpvtype', 'value'),State('input', 'value'), State('dropdown', 'value'),
-               State('dropdownwind', 'value'),
-               State('input load', 'value'), State('dropdownhousehold', 'value'),
-               State('input EV', 'value')
-               ], )
-    def update_output(n_clicks, n_click, n_clickbat, paneltype ,panelvalue, tiltvalue, turbinetype, loadvalue, loadtype, evvalue):
-        data.update({'pv_type': paneltype})
+        Output('hidden-div','load'),
+        [Input('button', 'n_clicks')],
+        state=[State('input load', 'value'), State('dropdownhousehold', 'value')],
+    )
+    def update_output_load(n_clicks,loadvalue, loadtype):
+        data={'N_load': loadvalue}
+        data.update({'load_type': loadtype})
+        client.publish("load", json.dumps(data))
+        print( 'load request')
+
+    @app.callback(
+        Output('hidden-div','EV'),
+        [Input('button', 'n_clicks')],
+        [State('input EV', 'value')],
+    )
+    def update_output_EV(n_clicks, evvalue):
+        N_EV.setValue(evvalue)
+        print('EV request')
+        return 0
+
+
+    @app.callback(
+        Output('hidden-div','PV'),
+        [Input('button', 'n_clicks')],
+        state=[State('dropdownpvtype', 'value'), State('input', 'value'), State('dropdown', 'value'),],
+    )
+    def update_output_solar(n_clicks, paneltype, panelvalue, tiltvalue):
+        data = ({'pv_type': paneltype})
         data.update({'N_solar': panelvalue})
         data.update({'tilt_panel': tiltvalue})
-        data.update({'turbine_type': turbinetype})
-        data.update({'N_load': loadvalue})
-        data.update({'load_type': loadtype})
-        client.publish("to_clients", json.dumps(data))
-        N_EV.setValue(evvalue)
-        print(dh)
-        global start
-        start = time.time()
+        client.publish("solar", json.dumps(data))
+        print('solar request')
+
+    @app.callback(
+        Output('hidden-div','Turbine'),
+        [Input('button', 'n_clicks')],
+        [State('dropdownwind', 'value')],
+    )
+    def update_output_wind(n_clicks, turbinetype):
+        data = ({'turbine_type': turbinetype})
+        client.publish("wind", json.dumps(data))
+        print('wind request')
+        return 0
 
 
 

@@ -25,9 +25,10 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, message):
     m = json.loads(message.payload.decode("utf-8"))
+    topic = message.topic
     print("message received ", str(m))
     print("message topic=", message.topic)
-    if wind:
+    if wind and topic == "wind":
         print('wind')
         try:
             turbine_type = m['turbine_type']
@@ -39,7 +40,7 @@ def on_message(client, userdata, message):
         calculation = power_calc.power_out_wind(turbine_type)
         hhub_powers.update(json.loads(calculation))
         client.publish("year_data", calculation)
-    if solar:
+    if solar and topic == "solar":
         print('solar')
         try:
             type_pvpanel = m['pv_type']
@@ -79,7 +80,7 @@ def on_message(client, userdata, message):
             print('no EV SoC from server')
         hhub_powers.update({'EV_SoC': EV_SoC, 'EV_SoC_rt': EV_SoC_rt})
         hour_SoC = hour_rt
-    if load:  # it is important that load is sent back last, because the battery calculation will wait for this to start
+    if load and topic == "load":  # it is important that load is sent back last, because the battery calculation will wait for this to start
         try:
             load_type = m['load_type']
         except:
@@ -124,6 +125,9 @@ hour_SoC = -1
 # in the loop, call back functions can be activated
 client.loop_start()
 client.subscribe("to_clients")
+client.subscribe("solar")
+client.subscribe("wind")
+client.subscribe("load")
 while True:
     time.sleep(1)
     if sys.platform == 'linux':
