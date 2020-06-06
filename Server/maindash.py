@@ -350,7 +350,10 @@ def update_graph_live_emissions(n):
 
 
 #------------------------MQTT--------------------------------------------------------------------
-
+wind = 0
+load = 0
+EV = 0
+PV = 0
 def connect_and_run_dash(client, N_EV):
 
     @app.callback(
@@ -359,10 +362,15 @@ def connect_and_run_dash(client, N_EV):
         state=[State('input load', 'value'), State('dropdownhousehold', 'value')],
     )
     def update_output_load(n_clicks,loadvalue, loadtype):
-        data={'N_load': loadvalue}
-        data.update({'load_type': loadtype})
-        client.publish("load", json.dumps(data))
-        print( 'load request')
+        global load
+        if load != [loadvalue,loadtype]:
+            load = [loadvalue,loadtype]
+            data = {'N_load': loadvalue}
+            data.update({'load_type': loadtype})
+            client.publish("load", json.dumps(data))
+            print( 'load request')
+        return 0
+
 
     @app.callback(
         Output('hidden-div','EV'),
@@ -370,8 +378,11 @@ def connect_and_run_dash(client, N_EV):
         [State('input EV', 'value')],
     )
     def update_output_EV(n_clicks, evvalue):
-        N_EV.setValue(evvalue)
-        print('EV request')
+        global EV
+        if EV != evvalue:
+            EV = evvalue
+            N_EV.setValue(evvalue)
+            print('EV request')
         return 0
 
 
@@ -381,11 +392,16 @@ def connect_and_run_dash(client, N_EV):
         state=[State('dropdownpvtype', 'value'), State('input', 'value'), State('dropdown', 'value'),],
     )
     def update_output_solar(n_clicks, paneltype, panelvalue, tiltvalue):
-        data = ({'pv_type': paneltype})
-        data.update({'N_solar': panelvalue})
-        data.update({'tilt_panel': tiltvalue})
-        client.publish("solar", json.dumps(data))
-        print('solar request')
+        global PV
+        if PV != [paneltype, panelvalue, tiltvalue]:
+            PV = [paneltype, panelvalue, tiltvalue]
+            data = ({'pv_type': paneltype})
+            data.update({'N_solar': panelvalue})
+            data.update({'tilt_panel': tiltvalue})
+            client.publish("solar", json.dumps(data))
+            print('solar request')
+        return 0
+
 
     @app.callback(
         Output('hidden-div','Turbine'),
@@ -393,9 +409,12 @@ def connect_and_run_dash(client, N_EV):
         [State('dropdownwind', 'value')],
     )
     def update_output_wind(n_clicks, turbinetype):
-        data = ({'turbine_type': turbinetype})
-        client.publish("wind", json.dumps(data))
-        print('wind request')
+        global wind
+        if wind != turbinetype:
+            wind = turbinetype
+            data = ({'turbine_type': turbinetype})
+            client.publish("wind", json.dumps(data))
+            print('wind request')
         return 0
 
 

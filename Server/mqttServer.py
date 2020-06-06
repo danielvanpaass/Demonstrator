@@ -28,8 +28,8 @@ def on_message(client, userdata, message):
     if topic == "year_data":
         year_data.update(received_data)
         N_EV = number_EV.getValue()
-        batteries = battery.power_battery(year_data, N_EV)
-        year_data.update(batteries)
+        # batteries = battery.power_battery(year_data, N_EV)
+        # year_data.update(batteries)
     if topic == "realtime_data":
         realtime_data.update(received_data)
         if 'power_load_rt' in received_data:
@@ -59,6 +59,9 @@ class N_EV():
 
     def setValue(self, value):
         self.value = value
+        batteries = battery.power_battery(year_data, self.value)
+        year_data.update(batteries)
+        maindash.dash_update_solar(year_data)
 
     def getValue(self):
         return self.value
