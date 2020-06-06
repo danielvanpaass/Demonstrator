@@ -113,8 +113,9 @@ app.layout = html.Div(children=[
     html.Div('Number of EV'),
     dcc.Input(id='input EV', value=80, type='number'),
     html.Button('Refresh', id='buttonev', n_clicks=0),
-
     html.Div(id='output-pv'),
+
+    html.Div(children = [
     dcc.Graph(id='pvpower', animate=True),
     dcc.Graph(id='windpower', animate=True),
     dcc.Graph(id='loadpower', animate=True),
@@ -124,9 +125,11 @@ app.layout = html.Div(children=[
     dcc.Graph(id='piechart', animate=True),
     dcc.Graph(id='piechartshare', animate=True),
     #dcc.Graph(id='emissions', animate=True),
+    ],id='output-all'),
+
     dcc.Interval(
         id='interval-component',
-        interval=2*1000,
+        interval=2*1000,#in miliseconds
         n_intervals=0
     )
 
@@ -138,6 +141,28 @@ def dash_update_solar(dict):
     dh.update(dict)
     end = time.time()
     print(end - start)
+
+@app.callback([
+    Output('pvpower', 'animate'),
+    Output('windpower', 'animate'),
+    Output('loadpower', 'animate'),
+    Output('EVpower', 'animate'),
+    Output('Hydrogen', 'animate'),
+    Output('gridpower', 'animate'),
+    Output('piechart', 'animate'),
+    Output('piechartshare', 'animate'),
+    ],
+    [Input('interval-component', 'n_intervals')])
+def update_graph_solar(n):
+    if n%2 == 0:
+        animate = False
+    else:
+        animate = True
+    animate = [animate]*8 #8 because 8 outputs are required
+    return animate
+
+
+
 
 #-------------------pv figure---------------------------------------------------------------
 @app.callback(Output('pvpower', 'figure'),
@@ -344,11 +369,12 @@ def connect_and_run_dash(client, N_EV):
         data.update({'turbine_type': turbinetype})
         data.update({'N_load': loadvalue})
         data.update({'load_type': loadtype})
-        data.update({'N_EV': evvalue})
         client.publish("to_clients", json.dumps(data))
+        N_EV.setValue(evvalue)
+        print(dh)
         global start
         start = time.time()
-        N_EV.setValue(loadvalue)
+
 
 
     app.run_server(debug=False)

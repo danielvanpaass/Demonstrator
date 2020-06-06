@@ -1,5 +1,6 @@
 import json
 import paho.mqtt.client as mqtt
+import random
 
 try:
     from Server import maindash
@@ -22,15 +23,13 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, message):
     received_data = json.loads(message.payload.decode("utf-8"))
+    print(received_data)
     topic = message.topic
     if topic == "year_data":
         year_data.update(received_data)
-        if 'power_load' in received_data:
-            N_EV = number_EV.getValue()
-            batteries = battery.power_battery(year_data, N_EV)
-            year_data.update(batteries)
-            SoC = {'EV_SoC': batteries['EV_SoC_rt'], 'H_SoC': batteries['H_SoC_rt']}
-            client.publish("to_clients", json.dumps(SoC))
+        N_EV = number_EV.getValue()
+        batteries = battery.power_battery(year_data, N_EV)
+        year_data.update(batteries)
     if topic == "realtime_data":
         realtime_data.update(received_data)
         if 'power_load_rt' in received_data:
@@ -48,25 +47,30 @@ def on_message(client, userdata, message):
 def getMAC(interface='eth0'):
     # Return the MAC address used for client ID
     try:
-        str = open('/sys/class/net/%s/address' % interface).read()
+        strs = open('/sys/class/net/%s/address' % interface).read()
     except:
-        str = 'alias_server_notpi'
-    return str[0:17]
+        strs = 'alias_server_notpi' + str(random.randint(0, 999))
+    return strs[0:21]
+
 
 class N_EV():
     def __init__(self, value):
         self.value = value
+
     def setValue(self, value):
         self.value = value
+
     def getValue(self):
         return self.value
+
+
 number_EV = N_EV(30)
 year_data = {}
 realtime_data = {}
 
 # broker_address = "raspberrypi"  # server Pi name (you can also use IP address here)
 broker_address = "test.mosquitto.org"  # use external broker
-#broker_address = "mqtt.eclipse.org"  # use external broker
+# broker_address = "mqtt.eclipse.org"  # use external broker
 
 # instantiate client with MAC client ID for the session
 client = mqtt.Client(getMAC('eth0'))

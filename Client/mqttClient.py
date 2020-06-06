@@ -3,6 +3,7 @@ import time
 import sys
 import paho.mqtt.client as mqtt
 import ReadUsbPi
+import random
 
 try:
     import power_calc
@@ -78,7 +79,6 @@ def on_message(client, userdata, message):
             print('no EV SoC from server')
         hhub_powers.update({'EV_SoC': EV_SoC, 'EV_SoC_rt': EV_SoC_rt})
         hour_SoC = hour_rt
-    time.sleep(0.08)
     if load:  # it is important that load is sent back last, because the battery calculation will wait for this to start
         try:
             load_type = m['load_type']
@@ -97,15 +97,15 @@ def on_message(client, userdata, message):
 def getMAC(interface='eth0'):
     # Return the MAC address used for client ID
     try:
-        str = open('/sys/class/net/%s/address' % interface).read()
+        strs = open('/sys/class/net/%s/address' % interface).read()
     except:
-        str = 'alias_client_notpis'
-    return str[0:17]
+        strs = 'alias_client_notpis' + str(random.randint(0, 999))
+    return strs[0:21]
 
 
 # broker_address = "raspberrypi"  # "raspberrypi"  # server Pi name
 broker_address = "test.mosquitto.org"  # use external broker
-#broker_address="mqtt.eclipse.org" #use external broker
+# broker_address="mqtt.eclipse.org" #use external broker
 
 # instantiate client with MAC client ID for the session
 client = mqtt.Client(getMAC('eth0'))
@@ -143,5 +143,5 @@ while True:
         while hour != hour_SoC:
             time.sleep(0.05)
         write_hhub.actuator_hhub(hour, updated_powers_year, wind, solar, load)
-        if hour!=-1:
+        if hour != -1:
             hour += 1

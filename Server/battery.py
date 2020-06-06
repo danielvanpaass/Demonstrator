@@ -93,7 +93,10 @@ def power_battery(powers, N_EV):
     global global_cars, global_hydrogen
     global_cars = []
     global_hydrogen.resetSoC(0.5)
-    power_load = np.array(powers['power_load'])
+    if 'power_load' in powers:
+        power_load = np.array(powers['power_load'])
+    else:
+        power_load = np.zeros(8760)
     power_source = np.zeros((len(power_load)))
     if 'power_solar' in powers:
         power_source = power_source + np.array(powers['power_solar'])
@@ -265,10 +268,11 @@ def power_battery_realtime(actuator_powers, hour):
 
 
 if __name__ == '__main__':
-    with open('powers.txt', 'r') as outfile:
-        powers = json.load(outfile)
+    # with open('powers.txt', 'r') as outfile:
+    #     powers = json.load(outfile)
+    powers = {}
     # powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     #           'power_solar': [100, 116, 130, 160, 170, 17, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
     b = power_battery(powers, N_EV=1)
-    actuator_powers = {'power_load':5, 'power_wind':10}
-    a = power_battery_realtime(actuator_powers, 0)
+    # actuator_powers = {'power_load':5, 'power_wind':10}
+    # a = power_battery_realtime(actuator_powers, 0)
