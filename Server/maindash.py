@@ -109,6 +109,7 @@ app.layout = html.Div(children=[
             style={'color': colors['text']}),
     html.Div('Number of EV'),
     dcc.Input(id='input EV', value=80, type='number'),
+    html.Button('Refresh battery', id='button_bat', n_clicks=0),
 
 
     html.Div(children = [
@@ -352,7 +353,6 @@ def update_graph_live_emissions(n):
 #------------------------MQTT--------------------------------------------------------------------
 wind = 0
 load = 0
-EV = 0
 PV = 0
 def connect_and_run_dash(client, N_EV):
 
@@ -372,18 +372,7 @@ def connect_and_run_dash(client, N_EV):
         return 0
 
 
-    @app.callback(
-        Output('hidden-div','EV'),
-        [Input('button', 'n_clicks')],
-        [State('input EV', 'value')],
-    )
-    def update_output_EV(n_clicks, evvalue):
-        global EV
-        if EV != evvalue:
-            EV = evvalue
-            N_EV.setValue(evvalue)
-            print('EV request')
-        return 0
+
 
 
     @app.callback(
@@ -417,7 +406,15 @@ def connect_and_run_dash(client, N_EV):
             print('wind request')
         return 0
 
-
+    @app.callback(
+        Output('hidden-div','battery'),
+        [Input('button_bat', 'n_clicks')],
+        [State('input EV', 'value')],
+    )
+    def update_output_bat(n_clicks,evvalue):
+        print('bat request')
+        N_EV.setValue(evvalue)
+        return 0
 
     app.run_server(debug=False)
 

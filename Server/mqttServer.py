@@ -27,9 +27,6 @@ def on_message(client, userdata, message):
     topic = message.topic
     if topic == "year_data":
         year_data.update(received_data)
-        N_EV = number_EV.getValue()
-        # batteries = battery.power_battery(year_data, N_EV)
-        # year_data.update(batteries)
     if topic == "realtime_data":
         realtime_data.update(received_data)
         if 'power_load_rt' in received_data:
