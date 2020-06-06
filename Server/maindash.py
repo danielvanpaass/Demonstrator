@@ -119,8 +119,8 @@ app.layout = html.Div(children=[
     dcc.Graph(id='EVpower', animate=True),
     dcc.Graph(id='Hydrogen', animate=True),
     dcc.Graph(id='gridpower', animate=True),
-    dcc.Graph(id='piechart', animate=True),
-    dcc.Graph(id='piechartshare', animate=True),
+    dcc.Graph(id='piechart', animate=False),
+    dcc.Graph(id='piechartshare', animate=False,)
     #dcc.Graph(id='emissions', animate=True),
     ],id='output-all'),
 
@@ -148,16 +148,15 @@ def dash_update_solar(dict):
     Output('EVpower', 'animate'),
     Output('Hydrogen', 'animate'),
     Output('gridpower', 'animate'),
-    Output('piechart', 'animate'),
-    Output('piechartshare', 'animate'),
     ],
     [Input('interval-component', 'n_intervals')])
-def update_graph_solar(n):
-    if n%2 == 0:
+def update_graph(n):
+    print(n)
+    if n%20 == 10:
         animate = False
     else:
         animate = True
-    animate = [animate]*8 #8 because 8 outputs are required
+    animate = [animate]*6 #8 because 8 outputs are required
     return animate
 
 
