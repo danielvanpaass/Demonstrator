@@ -70,7 +70,7 @@ app.layout = html.Div(children=[
         value='HIT-N245SE10'
     ),
     html.Div('Number of PV panels'),
-    dcc.Input(id='input', value=20, type='number'),
+    dcc.Input(id='input', value=200, type='number'),
     html.Button('Refresh', id='button', n_clicks=0),
     html.Div('Tilt of the PV panels'),
     dcc.Dropdown(
@@ -93,9 +93,11 @@ app.layout = html.Div(children=[
         ],
         value='Aeolos10'
     ),
+    html.Div('Number of Wind turbines'),
+    dcc.Input(id='inputwind', value=2, type='number'),
     html.H3('Load Parameters',
             style={'color': colors['text']}),
-    html.Div('Number of houses in the neighbourhood'),
+    html.Div('Type of Energy users'),
     dcc.Dropdown(
         id='dropdownhousehold',
         options=[
@@ -104,12 +106,21 @@ app.layout = html.Div(children=[
         ],
         value='average'
     ),
-    dcc.Input(id='input load', value=160, type='number'),
+    html.Div('Number of houses in the neighbourhood'),
+    dcc.Input(id='input load', value=40, type='number'),
     html.H3('Battery Parameters',
             style={'color': colors['text']}),
+    dcc.Checklist(
+        id='input H',
+        options=[
+            {'label': 'Use hydrogen battery', 'value': 1},
+        ],
+        value= [1]
+    ),
     html.Div('Number of EV'),
-    dcc.Input(id='input EV', value=80, type='number'),
+    dcc.Input(id='input EV', value=10, type='number'),
     html.Button('Refresh battery', id='button_bat', n_clicks=0),
+
 
 
     html.Div(children = [
@@ -120,7 +131,7 @@ app.layout = html.Div(children=[
     dcc.Graph(id='Hydrogen', animate=True),
     dcc.Graph(id='gridpower', animate=True),
     dcc.Graph(id='piechart', animate=False),
-    dcc.Graph(id='piechartshare', animate=False,)
+    #dcc.Graph(id='piechartshare', animate=False,)
     #dcc.Graph(id='emissions', animate=True),
     ],id='output-all'),
 
@@ -298,56 +309,35 @@ def update_graph_live_pie(n):
     tot_oil = tot_net * 0.04
     tot_nuclear = tot_net * 0.03
     tot_other = tot_net * 0.03
-    share = [tot_pv, tot_wind, tot_gas, tot_coal, tot_oil, tot_nuclear, tot_other]
-    figure = go.Figure(data=[go.Pie(labels=labels, values=share)])
-    figure.update_layout(
-        title_text="Share of Total Energy Consumption")
-    return figure
-
-
-@app.callback(Output('piechartshare', 'figure'),
-              [Input('interval-component', 'n_intervals')])
-def update_graph_live_pie(n):
-    tot_net = sumPositiveInts(dh['power_grid'])
-    tot_pv = sum(dh['power_solar']) + tot_net * 0.05
-    tot_wind = sum(dh['power_wind']) + tot_net* 0.08
-    tot_gas = tot_net * 0.45
-    tot_coal = tot_net * 0.32
-    tot_oil = tot_net * 0.04
-    tot_nuclear = tot_net * 0.03
-    tot_other = tot_net * 0.03
     green = tot_pv + tot_wind
     grey = tot_gas + tot_oil + tot_coal
     other = tot_nuclear + tot_other
-    share = [green, grey, other]
-    figure = go.Figure(data=[go.Pie(labels=labels_2, values=share)])
-    figure.update_layout(
-        title_text="Green and grey ratio neigbourhood use")
-    return figure
+    share = [tot_pv, tot_wind, tot_gas, tot_coal, tot_oil, tot_nuclear, tot_other]
+    share_2 = [green, grey, other]
+
+    fig = make_subplots(rows=1, cols=2, specs=[[{"type": "pie"}, {"type": "pie"}]])
+
+    fig.add_trace(go.Pie(
+        values=share,
+        labels=labels,
+        domain=dict(x=[0, 0.5]),
+        name="Share of Energy source"),
+        row=1, col=1)
+
+    fig.add_trace(go.Pie(
+        values=share_2,
+        labels=["Green", "Grey", "Unknown",
+                ],
+        domain=dict(x=[0.5, 1.0]),
+        name="Green vs grey"),
+        row=1, col=2)
+
+    return fig
 
 #-------------------emissions figure---------------------------------------------------------------
-@app.callback(Output('emissions', 'figure'),
-              [Input('interval-component', 'n_intervals')])
-def update_graph_live_emissions(n):
-    tot_net = sumPositiveInts(dh['power_grid'])
-    tot_pv = sum(dh['power_solar']) + tot_net * 0.05
-    tot_wind = sum(dh['power_wind']) + tot_net * 0.08
-    tot_gas = tot_net * 0.45
-    tot_coal = tot_net * 0.32
-    tot_oil = tot_net * 0.04
-    tot_nuclear = tot_net * 0.03
-    tot_other = tot_net * 0.03
-    tot_carbon = 0.2 * tot_net
-    tot_methane = 0.1 * tot_net
-    tot_nitrous = 0.05 * tot_net
-    tot_fluor = 0.04 * tot_net
-
-    labels1 = ['Carbon dioxide','Methane', 'Nitrous oxide','Fluorinated gases']
-    share1 = [tot_carbon,tot_methane,tot_nitrous,tot_fluor,]
-
-    labels2 = ['PV', 'Wind', 'Natural Gas', 'Coal', 'Oil', 'Nuclear', 'Other']
-    share2 = [tot_pv, tot_wind, tot_gas, tot_coal, tot_oil, tot_nuclear, tot_other]
-
+# @app.callback(Output('emissions', 'figure'),
+#               [Input('interval-component', 'n_intervals')])
+# def update_graph_live_emissions(n):
 
 #------------------------MQTT--------------------------------------------------------------------
 wind = 0
@@ -371,9 +361,6 @@ def connect_and_run_dash(client, number_bat):
         return 0
 
 
-
-
-
     @app.callback(
         Output('hidden-div','PV'),
         [Input('button', 'n_clicks')],
@@ -392,56 +379,31 @@ def connect_and_run_dash(client, number_bat):
 
 
     @app.callback(
-        Output('hidden-div','Turbine'),
+        Output('hidden-div', 'Turbine'),
         [Input('button', 'n_clicks')],
-        [State('dropdownwind', 'value')],#add amount of windmills
+        [State('dropdownwind', 'value'), State('inputwind', 'value')],  # add amount of windmills
     )
-    def update_output_wind(n_clicks, turbinetype):
+    def update_output_wind(n_clicks, turbinetype, windvalue):
         global wind
-        if wind != turbinetype:
-            wind = turbinetype
+        if wind != [turbinetype,windvalue]:
+            wind = [turbinetype,windvalue]
             data = ({'turbine_type': turbinetype})
+            data.update({'N_wind': windvalue})
             client.publish("wind", json.dumps(data))
             print('wind request')
-
         return 0
-
-    # @app.callback(
-    #     Output('hidden-div', 'Turbine'),
-    #     [Input('button', 'n_clicks')],
-    #     [State('dropdownwind', 'value'), State('windinput', 'value')],  # add amount of windmills
-    # )
-    # def update_output_wind(n_clicks, turbinetype, windvalue):
-    #     global wind
-        # if wind != [turbinetype,windvalue]:
-        #     wind = [turbinetype,windvalue]
-        #     data = ({'turbine_type': turbinetype})
-        #     data.update({'N_wind': windvalue})
-        #     client.publish("wind", json.dumps(data))
-        #     print('wind request')
-        # return 0
 
 
     @app.callback(
-        Output('hidden-div','battery'),
-        [Input('button_bat', 'n_clicks')],
-        [State('input EV', 'value')],
+       Output('hidden-div','battery'),
+       [Input('button_bat', 'n_clicks')],
+       [State('input EV', 'value'), State('input H', 'value')],
     )
-    def update_output_bat(n_clicks,evvalue):
-        print('bat request')
-        number_bat.setValue(evvalue, 1)
-        return 0
-
-    #@app.callback(
-      #  Output('hidden-div','battery'),
-       # [Input('button_bat', 'n_clicks')],
-      #  [State('input EV', 'value'), State('input H', 'value')],
-   # )
-   # def update_output_bat(n_clicks,evvalue, hydrogen):
-     #   print('bat request')
-      #  #hydrogen = 1 or hydrogen = 0
-      #  number_bat.setValue(evvalue, hydrogen)
-       # return 0
+    def update_output_bat(n_clicks,evvalue, hydrogen):
+       print('bat request')
+       #hydrogen = 1 or hydrogen = 0
+       number_bat.setValue(evvalue, hydrogen)
+       return 0
 
     app.run_server(debug=False)
 
