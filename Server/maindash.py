@@ -9,6 +9,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
+
+
 data = {}
 dh = {'power_solar': [1, 2, 3],
       'power_load': [1, 2, 3],
@@ -131,7 +133,7 @@ app.layout = html.Div(children=[
     dcc.Graph(id='Hydrogen', animate=True),
     dcc.Graph(id='gridpower', animate=True),
     dcc.Graph(id='piechart', animate=False),
-    #dcc.Graph(id='piechartshare', animate=False,)
+    dcc.Graph(id='LCOE', animate=False,)
     #dcc.Graph(id='emissions', animate=True),
     ],id='output-all'),
 
