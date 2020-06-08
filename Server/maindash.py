@@ -429,19 +429,19 @@ def connect_and_run_dash(client, number_bat):
     )
     def update_output_bat(n_clicks,evvalue):
         print('bat request')
-        number_bat.setValue(evvalue)
+        number_bat.setValue(evvalue, 1)
         return 0
 
-    @app.callback(
-        Output('hidden-div','battery'),
-        [Input('button_bat', 'n_clicks')],
-        [State('input EV', 'value'), State('input H', 'value')],
-    )
-    def update_output_bat(n_clicks,evvalue, hydrogen):
-        print('bat request')
-        #hydrogen = 1 or hydrogen = 0
-        number_bat.setValue(evvalue, hydrogen)
-        return 0
+    #@app.callback(
+      #  Output('hidden-div','battery'),
+       # [Input('button_bat', 'n_clicks')],
+      #  [State('input EV', 'value'), State('input H', 'value')],
+   # )
+   # def update_output_bat(n_clicks,evvalue, hydrogen):
+     #   print('bat request')
+      #  #hydrogen = 1 or hydrogen = 0
+      #  number_bat.setValue(evvalue, hydrogen)
+       # return 0
 
     app.run_server(debug=False)
 
