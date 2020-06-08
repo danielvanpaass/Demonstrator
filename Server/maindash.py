@@ -397,7 +397,7 @@ PV = 0
 def connect_and_run_dash(client, number_bat):
 
     @app.callback(
-        Output('loadpower', 'animate'),
+        Output('hidden-div','load'),
         [Input('button', 'n_clicks')],
         state=[State('input load', 'value'), State('dropdownhousehold', 'value')],
     )
@@ -409,8 +409,7 @@ def connect_and_run_dash(client, number_bat):
             data.update({'load_type': loadtype})
             client.publish("load", json.dumps(data))
             print( 'load request')
-        time.sleep(3)
-        return False
+        return 0
 
     # @app.callback([
     #     Output('pvpower', 'animate'),
