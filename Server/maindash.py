@@ -5,6 +5,7 @@ import time
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.exceptions import PreventUpdate
 import pandas as pd
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
@@ -124,13 +125,13 @@ app.layout = html.Div(children=[
 
 
     html.Div(children = [
-    dcc.Graph(id='pvpower', animate=True),
-    dcc.Graph(id='windpower', animate=True),
-    dcc.Graph(id='loadpower', animate=True),
-    dcc.Graph(id='EVpower', animate=True),
-    dcc.Graph(id='Hydrogen', animate=True),
-    dcc.Graph(id='gridpower', animate=True),
-    dcc.Graph(id='piechart', animate=False),
+    dcc.Graph(id='pvpower', ),
+    dcc.Graph(id='windpower',),
+    dcc.Graph(id='loadpower', ),
+    dcc.Graph(id='EVpower', ),
+    dcc.Graph(id='Hydrogen', ),
+    dcc.Graph(id='gridpower', ),
+    dcc.Graph(id='piechart', ),
     #dcc.Graph(id='piechartshare', animate=False,)
     #dcc.Graph(id='emissions', animate=True),
     ],id='output-all'),
@@ -152,155 +153,201 @@ def dash_update_solar(dict):
     print("received")
 
 
-@app.callback([
-    Output('pvpower', 'animate'),
-    Output('windpower', 'animate'),
-    Output('loadpower', 'animate'),
-    Output('EVpower', 'animate'),
-    Output('Hydrogen', 'animate'),
-    Output('gridpower', 'animate'),
-    ],
-    [Input('interval-component', 'n_intervals')])
-def update_graph(n):
-    print(n)
-    if n%20 == 10:
-        animate = False
-    else:
-        animate = True
-    animate = [animate]*6 #8 because 8 outputs are required
-    return animate
+# @app.callback([
+#     Output('pvpower', 'animate'),
+#     Output('windpower', 'animate'),
+#     Output('loadpower', 'animate'),
+#     Output('EVpower', 'animate'),
+#     Output('Hydrogen', 'animate'),
+#     Output('gridpower', 'animate'),
+#     ],
+#     [Input('interval-component', 'n_intervals')])
+# def update_graph(n):
+#     print(n)
+#
+#     animate = True
+#
+#     animate = [animate]*6 #8 because 8 outputs are required
+#     return animate
 
 
 
 
 #-------------------pv figure---------------------------------------------------------------
+PV_cache = 0
+
 @app.callback(Output('pvpower', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_solar(n):
-    figure = {
-        'data': [
-            {'x': dh['time'], 'y': dh['power_solar'], 'type': 'line', 'name': 'PV'}
-        ],
-        'layout': {
-            'title': 'PV power output',
-            'xaxis': {
-                'title': 'Time'
-            },
-            'yaxis': {
-                'title': 'Power [kW]'
+    global PV_cache
+    if PV_cache != dh['power_solar']:
+        PV_cache = dh['power_solar']
+        
+        figure = {
+            'data': [
+                {'x': dh['time'], 'y': dh['power_solar'], 'type': 'line', 'name': 'PV'}
+            ],
+            'layout': {
+                'title': 'PV power output',
+                'xaxis': {
+                    'title': 'Time'
+                },
+                'yaxis': {
+                    'title': 'Power [kW]'
+                }
             }
         }
-    }
+    else:
+        raise PreventUpdate
     return figure
 
 #-------------------Wind figure---------------------------------------------------------------
+wind_cache = 0
+
 @app.callback(Output('windpower', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_wind(n):
-    figure = {
-        'data': [
-            {'x': dh['time'], 'y': dh['power_wind'], 'type': 'line', 'name': 'Wind'}
-        ],
-        'layout': {
-            'title': 'Wind power output',
-            'xaxis': {
-                'title': 'Time'
-            },
-            'yaxis': {
-                'title': 'Power [kW]'
+    global wind_cache
+    if wind_cache != dh['power_wind']:
+        wind_cache = dh['power_wind']
+        figure = {
+            'data': [
+                {'x': dh['time'], 'y': dh['power_wind'], 'type': 'line', 'name': 'Wind'}
+            ],
+            'layout': {
+                'title': 'Wind power output',
+                'xaxis': {
+                    'title': 'Time'
+                },
+                'yaxis': {
+                    'title': 'Power [kW]'
+                }
             }
         }
-    }
+    else:
+        raise PreventUpdate
     return figure
 
 
 #-------------------load figure---------------------------------------------------------------
+load_cache = 0
+
 @app.callback(Output('loadpower', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_live_load(n):
-    figure = {
-        'data': [
-            {'x': dh['time'], 'y': dh['power_load'], 'type': 'line', 'name': 'load'}
-        ],
-        'layout': {
-            'title': 'Residential load consumption',
-            'xaxis': {
-                'title': 'Time'
-            },
-            'yaxis': {
-                'title': 'Power [kW]'
+    global load_cache
+    if load_cache != dh['power_load']:
+        load_cache = dh['power_load']
+        figure = {
+            'data': [
+                {'x': dh['time'], 'y': dh['power_load'], 'type': 'line', 'name': 'load'}
+            ],
+            'layout': {
+                'title': 'Residential load consumption',
+                'xaxis': {
+                    'title': 'Time'
+                },
+                'yaxis': {
+                    'title': 'Power [kW]'
+                }
             }
         }
-    }
+    else:
+        raise PreventUpdate
     return figure
 
 #-------------------Battery---------------------------------------------------------------
+EV_cache = 0
+
 @app.callback(Output('EVpower', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_ev(n):
-    figure = {
-        'data': [
-            {'x': dh['time'], 'y': dh['EV_SoC'], 'type': 'line', 'name': 'Battery'}
-        ],
-        'layout': {
-            'title': 'Electric vehicle battery soc',
-            'xaxis': {
-                'title': 'Time'
-            },
-            'yaxis': {
-                'title': 'SoC [%]'
+    global EV_cache
+    if EV_cache != dh['EV_SoC']:
+        EV_cache = dh['EV_SoC']
+        figure = {
+            'data': [
+                {'x': dh['time'], 'y': dh['EV_SoC'], 'type': 'line', 'name': 'Battery'}
+            ],
+            'layout': {
+                'title': 'Electric vehicle battery soc',
+                'xaxis': {
+                    'title': 'Time'
+                },
+                'yaxis': {
+                    'title': 'SoC [%]'
+                }
             }
         }
-    }
+    else:
+        raise PreventUpdate
     return figure
 
 
 #-------------------Battery---------------------------------------------------------------
+hydro_cache = 0
+
 @app.callback(Output('Hydrogen', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_hydrogen(n):
-    figure = {
-        'data': [
-            {'x': dh['time'], 'y': dh['H_SoC'], 'type': 'line', 'name': 'Hydrotank'}
-        ],
-        'layout': {
-            'title': 'Hydrogen battery soc',
-            'xaxis': {
-                'title': 'Time'
-            },
-            'yaxis': {
-                'title': 'SoC [%]'
+    global hydro_cache
+    if hydro_cache != dh['H_SoC']:
+        hydro_cache = dh['H_SoC']
+        figure = {
+            'data': [
+                {'x': dh['time'], 'y': dh['H_SoC'], 'type': 'line', 'name': 'Hydrotank'}
+            ],
+            'layout': {
+                'title': 'Hydrogen battery soc',
+                'xaxis': {
+                    'title': 'Time'
+                },
+                'yaxis': {
+                    'title': 'SoC [%]'
+                }
             }
         }
-    }
+    else:
+        raise PreventUpdate
     return figure
 
 
 #-------------------grid---------------------------------------------------------------
+grid_cache = 0
+
 @app.callback(Output('gridpower', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_live_load(n):
-    figure = {
-        'data': [
-            {'x': dh['time'], 'y': dh['power_grid'], 'type': 'line', 'name': 'grid'}
-        ],
-        'layout': {
-            'title': 'Grid Power flow',
-            'xaxis': {
-                'title': 'Time'
-            },
-            'yaxis': {
-                'title': 'Power [kW]'
+    global grid_cache
+    if grid_cache != dh['power_grid']:
+        grid_cache = dh['power_grid']
+        figure = {
+            'data': [
+                {'x': dh['time'], 'y': dh['power_grid'], 'type': 'line', 'name': 'grid'}
+            ],
+            'layout': {
+                'title': 'Grid Power flow',
+                'xaxis': {
+                    'title': 'Time'
+                },
+                'yaxis': {
+                    'title': 'Power [kW]'
+                }
             }
         }
-    }
+    else:
+        raise PreventUpdate
     return figure
 
 
 #-------------------pie chart---------------------------------------------------------------
+pie_cache = 0
+
 @app.callback(Output('piechart', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_live_pie(n):
+    global wind_cache
+
     tot_net = sumPositiveInts(dh['power_grid'])
     tot_pv = sum(dh['power_solar']) + tot_net * 0.05
     tot_wind = sum(dh['power_wind']) + tot_net* 0.08
@@ -331,7 +378,11 @@ def update_graph_live_pie(n):
         domain=dict(x=[0.5, 1.0]),
         name="Green vs grey"),
         row=1, col=2)
-
+    global pie_cache
+    if pie_cache != fig:
+        pie_cache = fig
+    else:
+        raise PreventUpdate
     return fig
 
 #-------------------emissions figure---------------------------------------------------------------
@@ -346,7 +397,7 @@ PV = 0
 def connect_and_run_dash(client, number_bat):
 
     @app.callback(
-        Output('hidden-div','load'),
+        Output('loadpower', 'animate'),
         [Input('button', 'n_clicks')],
         state=[State('input load', 'value'), State('dropdownhousehold', 'value')],
     )
@@ -358,8 +409,26 @@ def connect_and_run_dash(client, number_bat):
             data.update({'load_type': loadtype})
             client.publish("load", json.dumps(data))
             print( 'load request')
-        return 0
+        time.sleep(3)
+        return False
 
+    # @app.callback([
+    #     Output('pvpower', 'animate'),
+    #     Output('windpower', 'animate'),
+    #     Output('loadpower', 'animate'),
+    #     Output('EVpower', 'animate'),
+    #     Output('Hydrogen', 'animate'),
+    #     Output('gridpower', 'animate'),
+    # ],
+    #     [Input('interval-component', 'n_intervals')])
+    # def update_graph(n):
+    #     print(n)
+    #     if n % 20 == 10:
+    #         animate = False
+    #     else:
+    #         animate = True
+    #     animate = [animate] * 6  # 8 because 8 outputs are required
+    #     return animate
 
     @app.callback(
         Output('hidden-div','PV'),
