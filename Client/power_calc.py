@@ -48,10 +48,11 @@ tcell40 = pvlib.temperature.sapm_cell(global_ir_40, temp, wind, **temp_params)
 """Main function to be called in this file, for total power out in a year per hour"""
 
 
-def power_out_wind(type_turbine):
+def power_out_wind(type_turbine, N_wind):
     windpower = windmod.power_calc_wind(wind, type_turbine)
-    windpower = np.around(windpower.astype(np.float), 3)
-    data = {'power_wind': windpower.tolist()}
+    tot_windpower = windpower * N_wind
+    tot_windpower = np.around(tot_windpower.astype(np.float), 3)
+    data = {'power_wind': tot_windpower.tolist()}
     return json.dumps(data)
 
 

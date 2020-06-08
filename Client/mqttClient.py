@@ -32,12 +32,14 @@ def on_message(client, userdata, message):
         print('wind')
         try:
             turbine_type = m['turbine_type']
+            N_wind = m['N_wind']
         except:
             turbine_type = "WES5"
-            print('no turbine specified')
+            N_wind = 1
+            print('no turbine or amount specified')
         # this would also work, it would return default value wes5
         # turbine_type = m.get('turbine_type', 'WES5')
-        calculation = power_calc.power_out_wind(turbine_type)
+        calculation = power_calc.power_out_wind(turbine_type, N_wind)
         hhub_powers.update(json.loads(calculation))
         client.publish("year_data", calculation)
     if solar and topic == "solar":

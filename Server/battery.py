@@ -88,7 +88,7 @@ global_hydrogen = HydrogenTank(0.5)
 global_cars = []
 
 
-def power_battery(powers, N_EV):
+def power_battery(powers, N_EV, hydro_present):
     print(N_EV)
     global global_cars, global_hydrogen
     global_cars = []
@@ -120,6 +120,7 @@ def power_battery(powers, N_EV):
         global_cars.append(car)
     # create Hydrogen tank
     hydro = HydrogenTank(0.7)
+
     # go through the year
     for x in range(0, len(power_load)):
         # sort all cars by SoC, starting from lowest
@@ -148,7 +149,8 @@ def power_battery(powers, N_EV):
                         excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
                     break
             PEV_out[x] = stored_power_EV
-            if excess_power > 0.001:  # this means that all cars had not enough to store the kwh
+            if excess_power > 0.001 and hydro_present:  # this means that all cars had not enough to store the kwh
+
                 stored_power = hydro.storePower(-excess_power)
                 PH_out[x] = stored_power
                 excess_power = excess_power + stored_power
@@ -166,7 +168,7 @@ def power_battery(powers, N_EV):
                         excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
                     break
             PEV_out[x] = power_taken_EV
-            if abs(excess_power) > 0.001:  # this means that not all cars had enough energy
+            if abs(excess_power) > 0.001 and hydro_present:  # this means that not all cars had enough energy
                 power_taken = hydro.takePower(excess_power)
                 PH_out[x] = power_taken
                 excess_power = excess_power + power_taken
@@ -175,7 +177,8 @@ def power_battery(powers, N_EV):
                 Pgrid_out[x] = power_taken
         for i in range(0, N_EV):
             EV_SoC_out[x] = EV_SoC_out[x] + cars[i].getSoC() / N_EV  # store the average SoC
-        H_SoC_out[x] = hydro.getSoC()
+        if hydro_present:
+            H_SoC_out[x] = hydro.getSoC()
     Pgrid = np.around(Pgrid_out.astype(np.float), 3)
     PH = np.around(PH_out.astype(np.float), 3)
     PEV = np.around(PEV_out.astype(np.float), 3)
@@ -270,9 +273,9 @@ def power_battery_realtime(actuator_powers, hour):
 if __name__ == '__main__':
     # with open('powers.txt', 'r') as outfile:
     #     powers = json.load(outfile)
-    powers = {}
-    # powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #           'power_solar': [100, 116, 130, 160, 170, 17, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
-    b = power_battery(powers, N_EV=1)
+    # powers = {}
+    powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              'power_solar': [1, 1, 1, 1, 1, 1, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
+    b = power_battery(powers, N_EV=1, hydro_present=0)
     # actuator_powers = {'power_load':5, 'power_wind':10}
     # a = power_battery_realtime(actuator_powers, 0)

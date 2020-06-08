@@ -353,7 +353,7 @@ def update_graph_live_emissions(n):
 wind = 0
 load = 0
 PV = 0
-def connect_and_run_dash(client, N_EV):
+def connect_and_run_dash(client, number_bat):
 
     @app.callback(
         Output('hidden-div','load'),
@@ -394,7 +394,7 @@ def connect_and_run_dash(client, N_EV):
     @app.callback(
         Output('hidden-div','Turbine'),
         [Input('button', 'n_clicks')],
-        [State('dropdownwind', 'value')],
+        [State('dropdownwind', 'value')],#add amount of windmills
     )
     def update_output_wind(n_clicks, turbinetype):
         global wind
@@ -403,7 +403,24 @@ def connect_and_run_dash(client, N_EV):
             data = ({'turbine_type': turbinetype})
             client.publish("wind", json.dumps(data))
             print('wind request')
+
         return 0
+
+    # @app.callback(
+    #     Output('hidden-div', 'Turbine'),
+    #     [Input('button', 'n_clicks')],
+    #     [State('dropdownwind', 'value'), State('windinput', 'value')],  # add amount of windmills
+    # )
+    # def update_output_wind(n_clicks, turbinetype, windvalue):
+    #     global wind
+        # if wind != [turbinetype,windvalue]:
+        #     wind = [turbinetype,windvalue]
+        #     data = ({'turbine_type': turbinetype})
+        #     data.update({'N_wind': windvalue})
+        #     client.publish("wind", json.dumps(data))
+        #     print('wind request')
+        # return 0
+
 
     @app.callback(
         Output('hidden-div','battery'),
@@ -412,7 +429,18 @@ def connect_and_run_dash(client, N_EV):
     )
     def update_output_bat(n_clicks,evvalue):
         print('bat request')
-        N_EV.setValue(evvalue)
+        number_bat.setValue(evvalue)
+        return 0
+
+    @app.callback(
+        Output('hidden-div','battery'),
+        [Input('button_bat', 'n_clicks')],
+        [State('input EV', 'value'), State('input H', 'value')],
+    )
+    def update_output_bat(n_clicks,evvalue, hydrogen):
+        print('bat request')
+        #hydrogen = 1 or hydrogen = 0
+        number_bat.setValue(evvalue, hydrogen)
         return 0
 
     app.run_server(debug=False)

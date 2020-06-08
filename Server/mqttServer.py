@@ -50,21 +50,24 @@ def getMAC(interface='eth0'):
     return strs[0:21]
 
 
-class N_EV():
-    def __init__(self, value):
-        self.value = value
+class battery_values():
+    def __init__(self, value_EV, hydro):
+        self.EV = value_EV
+        self.hydro = hydro
 
-    def setValue(self, value):
-        self.value = value
-        batteries = battery.power_battery(year_data, self.value)
+
+    def setValue(self, value_EV, hydro):
+        self.EV = value_EV
+        self.hydro = hydro
+        batteries = battery.power_battery(year_data, self.EV, self.hydro)
         year_data.update(batteries)
         maindash.dash_update_solar(year_data)
 
     def getValue(self):
-        return self.value
+        return self.EV,self.hydro
 
 
-number_EV = N_EV(30)
+number_bat = battery_values(30,1)
 year_data = {}
 realtime_data = {}
 
@@ -88,6 +91,6 @@ client.subscribe("year_data")
 client.subscribe('realtime_data')
 # initial publish of power values
 while True:
-    maindash.connect_and_run_dash(client, number_EV)
+    maindash.connect_and_run_dash(client, number_bat)
 # client.publish("demon/data",power_out(600))
 # client.publish("demon/data","OFF")#publish
