@@ -13,10 +13,11 @@ class Car():
         self.currentEnergy = SoC * self.energyMax
         self.workdays = random.sample(range(5), 3) + [
             (random.randint(5, 6))]  # every car leaves home 3x from workdays, + 1 in the weekend, 0 means monday
+        self.efficiency = 0.964 #percentage
 
     def needCharging(self):
         if self.currentEnergy <= self.energyMin + 2:
-            self.currentEnergy = self.currentEnergy + 2  # this equals single trip to work
+            self.currentEnergy = self.currentEnergy + 2*self.efficiency  # this equals single trip to work
             return 2
         else:
             return 0
@@ -31,7 +32,7 @@ class Car():
         energy_surplus = max(self.currentEnergy - self.energyMin, 0)  # so surplus has to be larger than 0 or it will give 0
         power_out = min(energy_surplus, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E surplus constraint
-        self.currentEnergy = self.currentEnergy - power_out
+        self.currentEnergy = self.currentEnergy - power_out*(1.0/self.efficiency) # more energy is actually taken because of the conversion
         return power_out
 
     def storePower(self, power, day, hour):  # power should be negative because storing power
@@ -40,7 +41,7 @@ class Car():
         energy_chargeble = max(self.energyMax - self.currentEnergy, 0)  # has to be larger than 0 or it will give 0
         power_out = min(energy_chargeble, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E chargeble constraint
-        self.currentEnergy = self.currentEnergy + power_out
+        self.currentEnergy = self.currentEnergy + power_out*self.efficiency
         return -power_out
 
     def returnFromWork(self, day):
@@ -60,19 +61,21 @@ class HydrogenTank:
         self.powerMax = 100  # kwh
         self.energyMax = 300
         self.currentEnergy = SoC * self.energyMax
+        self.efficiency_store = 0.70
+        self.efficiency_take = 0.60
 
     def takePower(self, power):
         energy_surplus = max(self.currentEnergy, 0)  # so surplus has to be larger than 0 or it will give 0
         power_out = min(energy_surplus, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E surplus constraint
-        self.currentEnergy = self.currentEnergy - power_out
+        self.currentEnergy = self.currentEnergy - power_out*(1.0/self.efficiency_take)
         return power_out
 
     def storePower(self, power): # power should be negative because storing power
         energy_chargeble = max(self.energyMax - self.currentEnergy, 0)  # has to be larger than 0 or it will give 0
         power_out = min(energy_chargeble, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E chargeble constraint
-        self.currentEnergy = self.currentEnergy + power_out
+        self.currentEnergy = self.currentEnergy + power_out*self.efficiency_store
         return -power_out
 
     def getSoC(self):
@@ -276,6 +279,6 @@ if __name__ == '__main__':
     # powers = {}
     powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
               'power_solar': [1, 1, 1, 1, 1, 1, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
-    b = power_battery(powers, N_EV=1, hydro_present=0)
+    b = power_battery(powers, N_EV=1, hydro_present=1)
     # actuator_powers = {'power_load':5, 'power_wind':10}
     # a = power_battery_realtime(actuator_powers, 0)
