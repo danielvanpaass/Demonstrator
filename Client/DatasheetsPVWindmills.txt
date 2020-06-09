@@ -1,8 +1,10 @@
 All from : https://en.wind-turbine-models.com/turbines?kwrange=0%2C60 
 
 Windmills:
+https://en.wind-turbine-models.com/turbines/16-vestas-v90#:~:text=The%20rated%20power%20of%20Vestas,Vestas%20V90%20is%2090%20m.
 
 https://en.wind-turbine-models.com/turbines/812-ades-ades-60 {ades60}
+
 
 https://en.wind-turbine-models.com/turbines/1854-aeolos-aeolos-v-10kw {aeolos10}
 

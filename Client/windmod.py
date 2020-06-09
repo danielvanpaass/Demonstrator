@@ -4,6 +4,7 @@ import numpy as np
 
 WIND_PARAMETERS = {
     #'WES5': {'P_rated': 2500, 'V_rated': 8.5, 'height': 12, 'cut_inspeed': 3.0, 'cut_outspeed': 20, 'diameter': 5},
+    'V90-2MW': {'P_rated': 2000000, 'V_rated': 13, 'height': 80, 'cut_inspeed': 4.0, 'cut_outspeed': 25, 'diameter': 90},
     'Aria55+': {'P_rated': 57000, 'V_rated': 11, 'height': 19, 'cut_inspeed': 3.0, 'cut_outspeed': 25, 'diameter': 19},
     'Hummer60': {'P_rated': 60000, 'V_rated': 7.5, 'height': 12, 'cut_inspeed': 2.5, 'cut_outspeed': 20,
                  'diameter': 25},
