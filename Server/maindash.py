@@ -134,6 +134,7 @@ app.layout = html.Div(children=[
     dcc.Graph(id='piechart', ),
     #dcc.Graph(id='piechartshare', animate=False,)
     #dcc.Graph(id='emissions', animate=True),
+    dcc.Graph(id='table')
     ],id='output-all'),
 
     dcc.Interval(
@@ -389,6 +390,65 @@ def update_graph_live_pie(n):
 # @app.callback(Output('emissions', 'figure'),
 #               [Input('interval-component', 'n_intervals')])
 # def update_graph_live_emissions(n):
+
+
+#-------------------Table---------------------------------------------------------------
+table_cache = 0
+
+@app.callback(Output('table', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_table(n):
+    global wind_cache
+    pv_output = dh['power_solar']
+    w_output = dh['power_wind']
+    grid_output = dh['power_grid']
+    load_output=dh['power_load']
+
+
+
+    headerColor = '#00A6D6'
+    rowEvenColor = 'lightgrey'
+    rowOddColor = 'white'
+
+    fig = go.Figure(data=[go.Table(
+        header=dict(
+            values=['<b>Sort</b>', '<b>Jan</b>', '<b>Feb</b>', '<b>Mar</b>', '<b>April</b>', '<b>May</b>', '<b>Jun</b>',
+                    '<b>Jul</b>', '<b>Aug</b>', '<b>sep</b>', '<b>Oct</b>', '<b>Nov</b>', '<b>Dec</b>'],
+            line_color='darkslategray',
+            fill_color=headerColor,
+            align=['left', 'center'],
+            font=dict(color='white', size=12)
+        ),
+        cells=dict(
+            values=[
+                ['PV_yield_day', 'Wind_yield_day', 'Net_grid_day', 'Energy_saved', 'Bill_without', 'Bill_with'],
+                [sum(pv_output[:744]) / 31, sum(w_output[:744]) / 31, sum(grid_output[:744]) / 31, sum(pv_output[:744]) + sum(w_output[:744]), 0.22*sum(load_output[:744]), 0.22*(sum(load_output[:744])-(sum(pv_output[:744]) + sum(w_output[:744])))],
+                [1300000, 20000, 70000, 2000, 130902000, 10000],
+                [1300000, 20000, 120000, 2000, 131222000, 10000],
+                [1400000, 20000, 90000, 2000, 14102000, 10000],
+                [1200000, 20000, 80000, 2000, 12120000, 10000],
+                [1300000, 20000, 70000, 2000, 130902000, 10000],
+                [1300000, 20000, 120000, 2000, 131222000, 10000],
+                [1400000, 20000, 90000, 2000, 14102000, 10000],
+                [1200000, 20000, 80000, 2000, 12120000, 10000],
+                [1300000, 20000, 70000, 2000, 130902000, 10000],
+                [1300000, 20000, 120000, 2000, 131222000, 10000],
+                [1400000, 20000, 90000, 2000, 14102000, 10000]],
+
+            line_color='darkslategray',
+            # 2-D list of colors for alternating rows
+            fill_color=[[rowOddColor, rowEvenColor, rowOddColor, rowEvenColor, rowOddColor] * 5],
+            align=['left', 'center'],
+            font=dict(color='darkslategray', size=11)
+        ))
+    ])
+    global table_cache
+    if table_cache != fig:
+        table_cache = fig
+    else:
+        raise PreventUpdate
+    return fig
+
 
 #------------------------MQTT--------------------------------------------------------------------
 wind = 0
