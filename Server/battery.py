@@ -9,14 +9,14 @@ class Car():
         # self.working = 0  # all cars home
         self.powerMax = 6.6  # with level 2 station
         self.energyMax = 56
-        self.energyMin = 0.1*56  # enough for 1 more round trip to work
+        self.energyMin = 0.2*56 + 4  # 20% plus enough for round trip to work
         self.currentEnergy = SoC * self.energyMax
         self.workdays = random.sample(range(5), 3) + [
             (random.randint(5, 6))]  # every car leaves home 3x from workdays, + 1 in the weekend, 0 means monday
         self.efficiency = 0.964 #percentage
 
     def needCharging(self):
-        if self.currentEnergy <= self.energyMin + 2:
+        if self.currentEnergy <= self.energyMin :
             self.currentEnergy = self.currentEnergy + 2*self.efficiency  # this equals single trip to work
             return 2
         else:
@@ -56,10 +56,10 @@ class Car():
 
 
 class HydrogenTank:
-    def __init__(self, SoC):
+    def __init__(self, SoC, energyMax):
         self.SoC = SoC
-        self.powerMax = 100  # kwh
-        self.energyMax = 300
+        self.powerMax = 98  # kwh
+        self.energyMax = energyMax
         self.currentEnergy = SoC * self.energyMax
         self.efficiency_store = 0.70
         self.efficiency_take = 0.60
@@ -87,15 +87,15 @@ class HydrogenTank:
         self.currentEnergy = SoC * self.energyMax
 
 
-global_hydrogen = HydrogenTank(0.5)
+global_hydrogen = 0
 global_cars = []
 
 
-def power_battery(powers, N_EV, hydro_present):
+def power_battery(powers, N_EV, N_hydro):
     print(N_EV)
     global global_cars, global_hydrogen
     global_cars = []
-    global_hydrogen.resetSoC(0.5)
+    global_hydrogen = HydrogenTank(0.5, N_hydro * 396)
     if 'power_load' in powers:
         power_load = np.array(powers['power_load'])
     else:
@@ -122,7 +122,7 @@ def power_battery(powers, N_EV, hydro_present):
         car = Car(0.5)
         global_cars.append(car)
     # create Hydrogen tank
-    hydro = HydrogenTank(0.7)
+    hydro = HydrogenTank(0.5, N_hydro * 396)
 
     # go through the year
     for x in range(0, len(power_load)):
@@ -152,7 +152,7 @@ def power_battery(powers, N_EV, hydro_present):
                         excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
                     break
             PEV_out[x] = stored_power_EV
-            if excess_power > 0.001 and hydro_present:  # this means that all cars had not enough to store the kwh
+            if excess_power > 0.001 and N_hydro:  # this means that all cars had not enough to store the kwh
 
                 stored_power = hydro.storePower(-excess_power)
                 PH_out[x] = stored_power
@@ -171,7 +171,7 @@ def power_battery(powers, N_EV, hydro_present):
                         excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
                     break
             PEV_out[x] = power_taken_EV
-            if abs(excess_power) > 0.001 and hydro_present:  # this means that not all cars had enough energy
+            if abs(excess_power) > 0.001 and N_hydro:  # this means that not all cars had enough energy
                 power_taken = hydro.takePower(excess_power)
                 PH_out[x] = power_taken
                 excess_power = excess_power + power_taken
@@ -180,7 +180,7 @@ def power_battery(powers, N_EV, hydro_present):
                 Pgrid_out[x] = power_taken
         for i in range(0, N_EV):
             EV_SoC_out[x] = EV_SoC_out[x] + cars[i].getSoC() / N_EV  # store the average SoC
-        if hydro_present:
+        if N_hydro:
             H_SoC_out[x] = hydro.getSoC()
     Pgrid = np.around(Pgrid_out.astype(np.float), 3)
     PH = np.around(PH_out.astype(np.float), 3)
@@ -279,6 +279,6 @@ if __name__ == '__main__':
     # powers = {}
     powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
               'power_solar': [1, 1, 1, 1, 1, 1, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
-    b = power_battery(powers, N_EV=1, hydro_present=1)
+    b = power_battery(powers, N_EV=1, N_hydro=20)
     # actuator_powers = {'power_load':5, 'power_wind':10}
     # a = power_battery_realtime(actuator_powers, 0)
