@@ -12,7 +12,7 @@ except:
     import pvmod
 
 # choose good model params
-temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
+temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['close_roof_glass_glass']
 
 # get weather paramameters
 with open('wind.txt') as json_file:
