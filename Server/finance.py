@@ -79,8 +79,8 @@ def lcoe_wind():
 D_PV, LCOEPV = lcoe()
 D_W, LCOEW = lcoe_wind()
 
-# fig = go.Figure([go.Bar(x=['PV','Wind'], y=[LCOEPV, LCOEW])])
-# fig.show()
+fig = go.Figure([go.Bar(x=['PV','Wind'], y=[LCOEPV, LCOEW])])
+fig.show()
 
 def paybacktime():
     total_investment= N_wind * D_W['investment_cost'] + N_solar*D_PV['price'] + N_solar * 0.2 * 505.74
@@ -89,51 +89,51 @@ def paybacktime():
     print(payback)
 
 paybacktime()
-
-dh = {'power_solar': [1, 2, 3],
-      'power_load': [1, 2, 3],
-      'power_wind': [1, 2, 3],
-      'power_grid': [1, 2, 3],
-      'EV_SoC': [1, 2, 3],
-      'H_SoC': [1, 2, 3],
-      }
-pv_output = dh['power_solar']
-w_output = dh['power_wind']
-
-headerColor = '#00A6D6'
-rowEvenColor = 'lightgrey'
-rowOddColor = 'white'
-fig = go.Figure(data=[go.Table(
-  header=dict(
-    values=['<b>Sort</b>','<b>Jan</b>','<b>Feb</b>','<b>Mar</b>','<b>April</b>','<b>May</b>','<b>Jun</b>','<b>Jul</b>','<b>Aug</b>','<b>sep</b>','<b>Oct</b>','<b>Nov</b>','<b>Dec</b>'],
-    line_color='darkslategray',
-    fill_color=headerColor,
-    align=['left','center'],
-    font=dict(color='white', size=12)
-  ),
-  cells=dict(
-    values=[
-      ['PV_yield_day', 'Wind_yield_day', 'Net_grid_day', 'Energy_saved', 'Bill_without', 'Bill_with'],
-      [sum(pv_output[:3])/3, sum(w_output[:3])/3, 80000, 2000, 12120000, 10000],
-      [1300000, 20000, 70000, 2000, 130902000, 10000],
-      [1300000, 20000, 120000, 2000, 131222000, 10000],
-      [1400000, 20000, 90000, 2000, 14102000, 10000],
-      [1200000, 20000, 80000, 2000, 12120000, 10000],
-      [1300000, 20000, 70000, 2000, 130902000, 10000],
-      [1300000, 20000, 120000, 2000, 131222000, 10000],
-      [1400000, 20000, 90000, 2000, 14102000, 10000],
-      [1200000, 20000, 80000, 2000, 12120000, 10000],
-      [1300000, 20000, 70000, 2000, 130902000, 10000],
-      [1300000, 20000, 120000, 2000, 131222000, 10000],
-      [1400000, 20000, 90000, 2000, 14102000, 10000]],
-
-    line_color='darkslategray',
-    # 2-D list of colors for alternating rows
-    fill_color = [[rowOddColor,rowEvenColor,rowOddColor, rowEvenColor,rowOddColor]*5],
-    align = ['left', 'center'],
-    font = dict(color = 'darkslategray', size = 11)
-    ))
-])
-
-
-fig.show()
+#
+# dh = {'power_solar': [1, 2, 3],
+#       'power_load': [1, 2, 3],
+#       'power_wind': [1, 2, 3],
+#       'power_grid': [1, 2, 3],
+#       'EV_SoC': [1, 2, 3],
+#       'H_SoC': [1, 2, 3],
+#       }
+# pv_output = dh['power_solar']
+# w_output = dh['power_wind']
+#
+# headerColor = '#00A6D6'
+# rowEvenColor = 'lightgrey'
+# rowOddColor = 'white'
+# fig = go.Figure(data=[go.Table(
+#   header=dict(
+#     values=['<b>Sort</b>','<b>Jan</b>','<b>Feb</b>','<b>Mar</b>','<b>April</b>','<b>May</b>','<b>Jun</b>','<b>Jul</b>','<b>Aug</b>','<b>sep</b>','<b>Oct</b>','<b>Nov</b>','<b>Dec</b>'],
+#     line_color='darkslategray',
+#     fill_color=headerColor,
+#     align=['left','center'],
+#     font=dict(color='white', size=12)
+#   ),
+#   cells=dict(
+#     values=[
+#       ['PV_yield_day', 'Wind_yield_day', 'Net_grid_day', 'Energy_saved', 'Bill_without', 'Bill_with'],
+#       [sum(pv_output[:3])/3, sum(w_output[:3])/3, 80000, 2000, 12120000, 10000],
+#       [1300000, 20000, 70000, 2000, 130902000, 10000],
+#       [1300000, 20000, 120000, 2000, 131222000, 10000],
+#       [1400000, 20000, 90000, 2000, 14102000, 10000],
+#       [1200000, 20000, 80000, 2000, 12120000, 10000],
+#       [1300000, 20000, 70000, 2000, 130902000, 10000],
+#       [1300000, 20000, 120000, 2000, 131222000, 10000],
+#       [1400000, 20000, 90000, 2000, 14102000, 10000],
+#       [1200000, 20000, 80000, 2000, 12120000, 10000],
+#       [1300000, 20000, 70000, 2000, 130902000, 10000],
+#       [1300000, 20000, 120000, 2000, 131222000, 10000],
+#       [1400000, 20000, 90000, 2000, 14102000, 10000]],
+#
+#     line_color='darkslategray',
+#     # 2-D list of colors for alternating rows
+#     fill_color = [[rowOddColor,rowEvenColor,rowOddColor, rowEvenColor,rowOddColor]*5],
+#     align = ['left', 'center'],
+#     font = dict(color = 'darkslategray', size = 11)
+#     ))
+# ])
+#
+#
+# #fig.show()

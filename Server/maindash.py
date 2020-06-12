@@ -94,7 +94,7 @@ app.layout = html.Div(children=[
         id='dropdownwind',
         options=[
             {'label': 'Aeolos10', 'value': 'Aeolos10'},
-            {'label': 'WES5', 'value': 'WES5'},
+            {'label': 'Hummer60', 'value': 'Hummer60'},
         ],
         value='Aeolos10'
     ),
@@ -133,6 +133,7 @@ app.layout = html.Div(children=[
     dcc.Graph(id='piechart', ),
     #dcc.Graph(id='piechartshare', animate=False,)
     #dcc.Graph(id='emissions', animate=True),
+    html.Div(id='Paybacktime'),
     html.Div(id='table')
     ],id='output-all'),
 
@@ -340,6 +341,7 @@ def update_graph_live_load(n):
     return figure
 
 
+
 #-------------------pie chart---------------------------------------------------------------
 pie_cache = 0
 
@@ -389,6 +391,38 @@ def update_graph_live_pie(n):
 # @app.callback(Output('emissions', 'figure'),
 #               [Input('interval-component', 'n_intervals')])
 # def update_graph_live_emissions(n):
+
+
+#-------------------Payback---------------------------------------------------------------
+pay_cache = 0
+
+@app.callback(Output('Paybacktime', 'children'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_pay(n):
+    global pay_cache
+    if pay_cache != dh['power_grid']:
+        pay_cache = dh['power_grid']
+
+        WIND_FINANCE = {
+            'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
+            'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per KWh': 0.02}
+        }
+        PV_FINANCE = {
+            'Mono residential': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.30, 'OM': 12.43},
+            'Mono commercial': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.25, 'OM': 11.32},
+            'Poly residential': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.30, 'OM': 12.43},
+            'Poly commercial': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.25, 'OM': 11.32}
+        }
+        N_wind=1
+        N_solar=200
+        total_investment = 1000
+        yearly_savings = 200
+        payback = total_investment / yearly_savings
+        #print(payback)
+    else:
+        raise PreventUpdate
+    return payback
+
 
 
 #-------------------Table---------------------------------------------------------------
@@ -502,6 +536,7 @@ def update_graph_live_table(n):
     else:
         raise PreventUpdate
     return table
+
 
 
 #------------------------MQTT--------------------------------------------------------------------
