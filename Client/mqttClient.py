@@ -9,10 +9,10 @@ try:
     import power_calc
 except:  
     from Client import power_calc
-#try:
-#    import write_hhub
-#except:
-#    from Client import write_hhub
+try:
+   import write_hhub
+except:
+   from Client import write_hhub
 
 
 def on_connect(client, userdata, flags, rc):
