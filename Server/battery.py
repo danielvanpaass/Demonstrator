@@ -7,17 +7,18 @@ class Car():
     def __init__(self, SoC):
         self.SoC = SoC
         # self.working = 0  # all cars home
-        self.powerMax = 6.6  # with level 2 station
+        self.powerMax = 10  # with level 2 station
         self.energyMax = 56
         self.energyMin = 0.2*56 + 4  # 20% plus enough for round trip to work
         self.currentEnergy = SoC * self.energyMax
         self.workdays = random.sample(range(5), 3) + [
             (random.randint(5, 6))]  # every car leaves home 3x from workdays, + 1 in the weekend, 0 means monday
-        self.efficiency = 0.964 #percentage
+        self.efficiency_store = 0.9 #percentage
+        self.efficiency_take = 0.93 #percentage
 
     def needCharging(self):
         if self.currentEnergy <= self.energyMin :
-            self.currentEnergy = self.currentEnergy + 2*self.efficiency  # this equals single trip to work
+            self.currentEnergy = self.currentEnergy + 2*self.efficiency_store  # this equals single trip to work
             return 2
         else:
             return 0
@@ -32,7 +33,7 @@ class Car():
         energy_surplus = max(self.currentEnergy - self.energyMin, 0)  # so surplus has to be larger than 0 or it will give 0
         power_out = min(energy_surplus, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E surplus constraint
-        self.currentEnergy = self.currentEnergy - power_out*(1.0/self.efficiency) # more energy is actually taken because of the conversion
+        self.currentEnergy = self.currentEnergy - power_out*(1.0/self.efficiency_take) # more energy is actually taken because of the conversion
         return power_out
 
     def storePower(self, power, day, hour):  # power should be negative because storing power
@@ -41,7 +42,7 @@ class Car():
         energy_chargeble = max(self.energyMax - self.currentEnergy, 0)  # has to be larger than 0 or it will give 0
         power_out = min(energy_chargeble, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E chargeble constraint
-        self.currentEnergy = self.currentEnergy + power_out*self.efficiency
+        self.currentEnergy = self.currentEnergy + power_out*self.efficiency_store
         return -power_out
 
     def returnFromWork(self, day):
