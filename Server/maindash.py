@@ -132,7 +132,7 @@ app.layout = html.Div(children=[
     dcc.Graph(id='gridpower', ),
     dcc.Graph(id='piechart', ),
     #dcc.Graph(id='piechartshare', animate=False,)
-    #dcc.Graph(id='emissions', animate=True),
+    dcc.Graph(id='emission', animate=True),
     html.Div(id='Paybacktime'),
     html.Div(id='table')
     ],id='output-all'),
@@ -388,9 +388,45 @@ def update_graph_live_pie(n):
     return fig
 
 #-------------------emissions figure---------------------------------------------------------------
-# @app.callback(Output('emissions', 'figure'),
-#               [Input('interval-component', 'n_intervals')])
-# def update_graph_live_emissions(n):
+em_cache = 0
+
+@app.callback(Output('emission', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_emission(n):
+    global em_cache
+
+    tot_net = sumPositiveInts(dh['power_grid'])
+    tot_pv = sum(dh['power_solar']) + tot_net * 0.05
+    pv_carbon = tot_pv*0.0000527
+    tot_wind = sum(dh['power_wind']) + tot_net* 0.08
+    wind_carbon = tot_wind * 0.0000175
+    tot_gas = tot_net * 0.45
+    tot_coal = tot_net * 0.32
+    tot_oil = tot_net * 0.04
+    tot_nuclear = tot_net * 0.03
+    tot_other = tot_net * 0.03
+    sources = ['Solar', 'Wind', 'Battery']
+
+    fig = go.Figure(data=[
+        go.Bar(name='GHG', x=sources, y=[pv_carbon, wind_carbon, 2])
+    ])
+    fig.update_layout(
+        title="Life cycle emission",
+        xaxis_title="Generation source",
+        yaxis_title="Tonne CO2 equivalent",
+        font=dict(
+            family="Courier New, monospace",
+            size=18,
+            color="#7f7f7f"
+        )
+    )
+    global em_cache
+    if em_cache != fig:
+        em_cache = fig
+    else:
+        raise PreventUpdate
+    return fig
+
 
 
 #-------------------Payback---------------------------------------------------------------

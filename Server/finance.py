@@ -80,6 +80,16 @@ D_PV, LCOEPV = lcoe()
 D_W, LCOEW = lcoe_wind()
 
 fig = go.Figure([go.Bar(x=['PV','Wind'], y=[LCOEPV, LCOEW])])
+fig.update_layout(
+    title="LCOE",
+    xaxis_title="Generation source",
+    yaxis_title="€/KWh",
+    font=dict(
+        family="Courier New, monospace",
+        size=18,
+        color="#7f7f7f"
+    )
+)
 fig.show()
 
 def paybacktime():
