@@ -132,3 +132,4 @@ dmypy.json
 Server/Time-Load-PV-Wind.json
 Client/Load.csv
 
+*.png
