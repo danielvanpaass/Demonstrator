@@ -79,7 +79,7 @@ def lcoe_wind():
 D_PV, LCOEPV = lcoe()
 D_W, LCOEW = lcoe_wind()
 
-fig = go.Figure([go.Bar(x=['PV','Wind'], y=[LCOEPV, LCOEW])])
+fig = go.Figure([go.Bar(x=['PV','Wind'], y=[LCOEPV, LCOEW], marker_color='#00A6D6',)])
 fig.update_layout(
     title="LCOE",
     xaxis_title="Generation source",

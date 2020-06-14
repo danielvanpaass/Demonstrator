@@ -187,7 +187,7 @@ def update_graph_solar(n):
         figure = {
             'data': [
                 {'x': dh['time'], 'y': dh['power_solar'], 'type': 'line', 'name': 'PV'}
-            ],
+            ],'marker' : { 'color' :'#00A6D6' },
             'layout': {
                 'title': 'PV power output',
                 'xaxis': {
@@ -241,8 +241,8 @@ def update_graph_live_load(n):
         load_cache = dh['power_load']
         figure = {
             'data': [
-                {'x': dh['time'], 'y': dh['power_load'], 'type': 'line', 'name': 'load'}
-            ],
+                {'x': dh['time'], 'y': dh['power_load'], 'type': 'line', 'name': 'load',}
+            ],'marker' : { 'color' :'#00A6D6' },
             'layout': {
                 'title': 'Residential load consumption',
                 'xaxis': {
@@ -269,7 +269,7 @@ def update_graph_ev(n):
         figure = {
             'data': [
                 {'x': dh['time'], 'y': dh['EV_SoC'], 'type': 'line', 'name': 'Battery'}
-            ],
+            ],'marker' : { 'color' :'#00A6D6' },
             'layout': {
                 'title': 'Electric vehicle battery soc',
                 'xaxis': {
@@ -297,7 +297,7 @@ def update_graph_hydrogen(n):
         figure = {
             'data': [
                 {'x': dh['time'], 'y': dh['H_SoC'], 'type': 'line', 'name': 'Hydrotank'}
-            ],
+            ],'marker' : { 'color' :'#00A6D6' },
             'layout': {
                 'title': 'Hydrogen battery soc',
                 'xaxis': {
@@ -397,9 +397,10 @@ def update_graph_live_emission(n):
 
     tot_net = sumPositiveInts(dh['power_grid'])
     tot_pv = sum(dh['power_solar']) + tot_net * 0.05
-    pv_carbon = tot_pv*0.0000527
+    pv_carbon = round(tot_pv*0.0000527,3)
     tot_wind = sum(dh['power_wind']) + tot_net* 0.08
-    wind_carbon = tot_wind * 0.0000175
+    wind_carbon = round(tot_wind * 0.0000175,3)
+    tot_bat=0
     tot_gas = tot_net * 0.45
     tot_coal = tot_net * 0.32
     tot_oil = tot_net * 0.04
@@ -408,7 +409,7 @@ def update_graph_live_emission(n):
     sources = ['Solar', 'Wind', 'Battery']
 
     fig = go.Figure(data=[
-        go.Bar(name='GHG', x=sources, y=[pv_carbon, wind_carbon, 2])
+        go.Bar(name='GHG', x=sources, y=[pv_carbon, wind_carbon, 2], marker_color='#00A6D6',)
     ])
     fig.update_layout(
         title="Life cycle emission",
@@ -508,9 +509,11 @@ def update_graph_live_table(n):
         data=df_typing_formatting.to_dict('rows'),
         columns=[{
             'id': 'Month',
-            'name': 'City',
+            'name': 'Month',
             'type': 'text'
-        }, {
+        },
+
+            {
             'id': 'PV',
             'name': 'PV output (KWh) / day',
             'type': 'numeric',
@@ -569,7 +572,7 @@ def update_graph_live_table(n):
                 symbol_suffix=u'€'
             )
         },
-        ],
+        ],style_header={'backgroundColor': '#00A6D6'},
         editable=True
     )
 
