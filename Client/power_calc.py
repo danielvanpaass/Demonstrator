@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import pvlib
+import matplotlib.pyplot as plt
 
 try:
     from Client import windmod
@@ -86,8 +87,29 @@ def power_out_load(N_load, type_load):
 
 
 if __name__ == '__main__':
-    cel2 = power_out_solar(1, 35, 'HIT-N245SE10')
-    cel22 = json.loads(cel2)
-    max(cel22['power_solar'])
-    print(power_out_load(1,'average'))
+
+    cel2 = power_out_load(1, 'saving')
+    cel2 = json.loads(cel2)['power_load'][0:23]
+
+
+    cel1 = power_out_load(1, 'average')
+    cel1 = json.loads(cel1)['power_load'][0:23]
+    time = np.arange(0, 23)
+    plt.plot(time, cel1, label='Average household')
+
+    plt.plot(time, cel2, label='Energy saving household')
+    plt.legend()
+
+    plt.ylabel('Electricity consumption (kW)')
+    plt.xlabel('Time (hour)')
+    plt.title('Electricity consumption of two types of households')
+    plt.gca().set_ylim(bottom=0)
+    plt.xlim(0, 23)
+    plt.savefig('test.png', bbox_inches='tight')
+
+    plt.show()
+
+    # cel22 = json.loads(cel2)
+    # max(cel22['power_solar'])
+    # print(power_out_load(1,'average'))
     # print(power_out(2, 40))

@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import json
-
+import matplotlib.pyplot as plt
 
 class Car():
     def __init__(self, SoC):
@@ -93,7 +93,6 @@ global_cars = []
 
 
 def power_battery(powers, N_EV, N_hydro):
-    print(N_EV)
     global global_cars, global_hydrogen
     global_cars = []
     global_hydrogen = HydrogenTank(0.5, N_hydro * 396)
@@ -116,7 +115,7 @@ def power_battery(powers, N_EV, N_hydro):
     cars = []
     # create all cars
     for x in range(N_EV):
-        car = Car(0.7)
+        car = Car(0.5)
         cars.append(car)  # starting all cars with battery on 70%
         global_cars.append(car)
     for x in range(N_EV): #create a new cars list for the realtime battery as well
@@ -278,8 +277,42 @@ if __name__ == '__main__':
     # with open('powers.txt', 'r') as outfile:
     #     powers = json.load(outfile)
     # powers = {}
-    powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-              'power_solar': [1, 1, 1, 1, 1, 1, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
-    b = power_battery(powers, N_EV=1, N_hydro=20)
+    powers = {'power_load': [0]*23,
+              'power_solar': [100]*12+[-100]*11}
+    b = power_battery(powers, N_EV=1, N_hydro=1)
+    power_EV = b['power_EV']
+    power_hydrogen = b['power_hydrogen']
+    power_grid = b['power_grid']
+    EV_SoC = b['EV_SoC']
+    EV_SoC = [i * 100 for i in EV_SoC]
+    H_SoC = b['H_SoC']
+    H_SoC = [i * 100 for i in H_SoC]
+    time = np.arange(0, 23)
+
+
+    fig, ax1 = plt.subplots()
+
+    color = 'tab:red'
+    ax1.set_xlabel('Time (hour)')
+    ax1.set_ylabel('Power output (kW)', color=color)
+    ax1.plot(time, power_EV, color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+    color = 'tab:blue'
+    ax2.set_ylabel('SoC (%)', color=color)  # we already handled the x-label with ax1
+    ax2.plot(time, EV_SoC, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.legend()
+    plt.grid()
+    plt.title('Power flow and SoC of the EV')
+    # plt.gca().set_ylim(bottom=0)
+    plt.xlim(0, 23)
+    plt.savefig('test.png', bbox_inches='tight')
+
+    plt.show()
     # actuator_powers = {'power_load':5, 'power_wind':10}
     # a = power_battery_realtime(actuator_powers, 0)
