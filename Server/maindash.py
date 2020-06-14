@@ -9,6 +9,10 @@ from dash.exceptions import PreventUpdate
 import pandas as pd
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
+import dash_table
+from dash_table.Format import Format, Scheme, Sign, Symbol
+import pandas as pd
+from collections import OrderedDict
 from plotly.subplots import make_subplots
 data = {}
 dh = {'power_solar': [1, 2, 3],
@@ -90,7 +94,7 @@ app.layout = html.Div(children=[
         id='dropdownwind',
         options=[
             {'label': 'Aeolos10', 'value': 'Aeolos10'},
-            {'label': 'WES5', 'value': 'WES5'},
+            {'label': 'Hummer60', 'value': 'Hummer60'},
         ],
         value='Aeolos10'
     ),
@@ -111,13 +115,8 @@ app.layout = html.Div(children=[
     dcc.Input(id='input load', value=40, type='number'),
     html.H3('Battery Parameters',
             style={'color': colors['text']}),
-    dcc.Checklist(
-        id='input H',
-        options=[
-            {'label': 'Use hydrogen battery', 'value': 1},
-        ],
-        value= [1]
-    ),
+    html.Div('Number of Hydrogen Tanks'),
+    dcc.Input(id='input H', value=1, type='number'),
     html.Div('Number of EV'),
     dcc.Input(id='input EV', value=10, type='number'),
     html.Button('Refresh battery', id='button_bat', n_clicks=0),
@@ -133,8 +132,9 @@ app.layout = html.Div(children=[
     dcc.Graph(id='gridpower', ),
     dcc.Graph(id='piechart', ),
     #dcc.Graph(id='piechartshare', animate=False,)
-    #dcc.Graph(id='emissions', animate=True),
-    dcc.Graph(id='table')
+    dcc.Graph(id='emission', animate=True),
+    html.Div(id='Paybacktime'),
+    html.Div(id='table')
     ],id='output-all'),
 
     dcc.Interval(
@@ -341,6 +341,7 @@ def update_graph_live_load(n):
     return figure
 
 
+
 #-------------------pie chart---------------------------------------------------------------
 pie_cache = 0
 
@@ -387,67 +388,200 @@ def update_graph_live_pie(n):
     return fig
 
 #-------------------emissions figure---------------------------------------------------------------
-# @app.callback(Output('emissions', 'figure'),
-#               [Input('interval-component', 'n_intervals')])
-# def update_graph_live_emissions(n):
+em_cache = 0
+
+@app.callback(Output('emission', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_emission(n):
+    global em_cache
+
+    tot_net = sumPositiveInts(dh['power_grid'])
+    tot_pv = sum(dh['power_solar']) + tot_net * 0.05
+    pv_carbon = tot_pv*0.0000527
+    tot_wind = sum(dh['power_wind']) + tot_net* 0.08
+    wind_carbon = tot_wind * 0.0000175
+    tot_gas = tot_net * 0.45
+    tot_coal = tot_net * 0.32
+    tot_oil = tot_net * 0.04
+    tot_nuclear = tot_net * 0.03
+    tot_other = tot_net * 0.03
+    sources = ['Solar', 'Wind', 'Battery']
+
+    fig = go.Figure(data=[
+        go.Bar(name='GHG', x=sources, y=[pv_carbon, wind_carbon, 2])
+    ])
+    fig.update_layout(
+        title="Life cycle emission",
+        xaxis_title="Generation source",
+        yaxis_title="Tonne CO2 equivalent",
+        font=dict(
+            family="Courier New, monospace",
+            size=18,
+            color="#7f7f7f"
+        )
+    )
+    global em_cache
+    if em_cache != fig:
+        em_cache = fig
+    else:
+        raise PreventUpdate
+    return fig
+
+
+
+#-------------------Payback---------------------------------------------------------------
+pay_cache = 0
+
+@app.callback(Output('Paybacktime', 'children'),
+              [Input('interval-component', 'n_intervals')])
+def update_graph_live_pay(n):
+    global pay_cache
+    if pay_cache != dh['power_grid']:
+        pay_cache = dh['power_grid']
+
+        WIND_FINANCE = {
+            'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
+            'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per KWh': 0.02}
+        }
+        PV_FINANCE = {
+            'Mono residential': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.30, 'OM': 12.43},
+            'Mono commercial': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.25, 'OM': 11.32},
+            'Poly residential': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.30, 'OM': 12.43},
+            'Poly commercial': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.25, 'OM': 11.32}
+        }
+        N_wind=1
+        N_solar=200
+        total_investment = 1000
+        yearly_savings = 200
+        payback = total_investment / yearly_savings
+        #print(payback)
+    else:
+        raise PreventUpdate
+    return payback
+
 
 
 #-------------------Table---------------------------------------------------------------
 table_cache = 0
 
-@app.callback(Output('table', 'figure'),
+@app.callback(Output('table', 'children'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_live_table(n):
     global wind_cache
-    pv_output = dh['power_solar']
-    w_output = dh['power_wind']
-    grid_output = dh['power_grid']
-    load_output=dh['power_load']
+    pv_o = dh['power_solar']
+    w_o = dh['power_wind']
+    g_o = dh['power_grid']
+    l_o = dh['power_load']
+
+    df_typing_formatting = pd.DataFrame(OrderedDict([
+        ('Month', ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'Total 2019']),
+        ('PV', [sum(pv_o[:744]) / 31, sum(pv_o[745:1416]) / 31, sum(pv_o[1417:2161]) / 31, sum(pv_o[2161:2881]) / 31,
+                sum(pv_o[2881:3625]) / 31, sum(pv_o[3625:4345]) / 31, sum(pv_o[4345:5089]) / 31, sum(pv_o[5089:5833]) / 31,
+                sum(pv_o[5833:6553]) / 31, sum(pv_o[6553:7297]) / 31, sum(pv_o[7297:8017]) / 31, sum(pv_o[8017:8761]) / 31,
+                sum(pv_o) / 31]),
+        ('Wind', [sum(w_o[:744]) / 31, sum(w_o[745:1416]) / 31, sum(w_o[1417:2161]) / 31, sum(w_o[2161:2881]) / 31,
+                sum(w_o[2881:3625]) / 31, sum(w_o[3625:4345]) / 31, sum(w_o[4345:5089]) / 31, sum(w_o[5089:5833]) / 31,
+                sum(w_o[5833:6553]) / 31, sum(w_o[6553:7297]) / 31, sum(w_o[7297:8017]) / 31, sum(w_o[8017:8761]) / 31,
+                sum(w_o) / 31]),
+        ('Grid', [sum(g_o[:744]) / 31, sum(g_o[745:1416]) / 31, sum(g_o[1417:2161]) / 31, sum(g_o[2161:2881]) / 31,
+                sum(g_o[2881:3625]) / 31, sum(g_o[3625:4345]) / 31, sum(g_o[4345:5089]) / 31, sum(g_o[5089:5833]) / 31,
+                sum(g_o[5833:6553]) / 31, sum(g_o[6553:7297]) / 31, sum(g_o[7297:8017]) / 31, sum(g_o[8017:8761]) / 31,
+                sum(g_o) / 31]),
+        ('Electricity Saved', [(sum(w_o[:744]) + sum(pv_o[:744])) / 31, (sum(w_o[745:1416]) + sum(pv_o[745:1416])) / 31,
+                               (sum(w_o[1417:2161]) + sum(pv_o[1417:2161])) / 31, (sum(w_o[2161:2881]) + sum(pv_o[2161:2881])) / 31,
+                               (sum(w_o[2881:3625]) + sum(pv_o[2881:3625])) / 31, (sum(w_o[3625:4345]) + sum(pv_o[3625:4345])) / 31,
+                               (sum(w_o[4345:5089]) + sum(pv_o[4345:5089])) / 31, (sum(w_o[5089:5833]) + sum(pv_o[5089:5833])) / 31,
+                               (sum(w_o[5833:6553]) + sum(pv_o[5833:6553])) / 31, (sum(w_o[6553:7297]) + sum(pv_o[6553:7297])) / 31,
+                               (sum(w_o[7297:8017]) + sum(pv_o[7297:8017])) / 31, (sum(w_o[8017:8761]) + sum(pv_o[8017:8761])) / 31,
+                               (sum(w_o) + sum(pv_o)) / 31]),
+        ('Without', [sum(l_o[:744])*0.22, sum(l_o[745:1416])*0.22, sum(l_o[1417:2161])*0.22, sum(l_o[2161:2881])*0.22,
+                sum(l_o[2881:3625])*0.22, sum(l_o[3625:4345])*0.22, sum(l_o[4345:5089])*0.22, sum(l_o[5089:5833])*0.22,
+                sum(l_o[5833:6553])*0.22, sum(l_o[6553:7297])*0.22, sum(l_o[7297:8017])*0.22, sum(l_o[8017:8761])*0.22,
+                sum(l_o)*0.22]),
+        ('With', [(sum(g_o[:744])*0.22), sum(g_o[745:1416])*0.22, sum(g_o[1417:2161])*0.22, sum(g_o[2161:2881])*0.22,
+                sum(g_o[2881:3625])*0.22, sum(g_o[3625:4345])*0.22, sum(g_o[4345:5089])*0.22, sum(g_o[5089:5833])*0.22,
+                sum(g_o[5833:6553])*0.22, sum(g_o[6553:7297])*0.22, sum(g_o[7297:8017])*0.22, sum(g_o[8017:8761])*0.22,
+                sum(g_o)*0.22]),
+    ]))
+    table = dash_table.DataTable(
+        id='typing_formatting_1',
+        data=df_typing_formatting.to_dict('rows'),
+        columns=[{
+            'id': 'Month',
+            'name': 'City',
+            'type': 'text'
+        }, {
+            'id': 'PV',
+            'name': 'PV output (KWh) / day',
+            'type': 'numeric',
+            'format': Format(
+                precision=1,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'KWh')
+        }, {
+            'id': 'Wind',
+            'name': 'Wind output (KWh) / day',
+            'type': 'numeric',
+            'format': Format(
+                precision=1,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'KWh')
+        }, {
+            'id': 'Grid',
+            'name': 'Grid output (KWh) / day',
+            'type': 'numeric',
+            'format': Format(
+                precision=1,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'KWh')
+
+        }, {
+            'id': 'Electricity Saved',
+            'name': 'Electricity Saved (KWh) / day',
+            'type': 'numeric',
+            'format': Format(
+                precision=1,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'KWh')
+
+        }, {
+            'id': 'Without',
+            'name': 'Energy cost Without (€)',
+            'type': 'numeric',
+            'format': Format(
+                precision=2,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'€'
+            ),
+        }, {
+            'id': 'With',
+            'name': 'Energy cost With (€)',
+            'type': 'numeric',
+            'format': Format(
+                precision=2,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'€'
+            )
+        },
+        ],
+        editable=True
+    )
 
 
 
-    headerColor = '#00A6D6'
-    rowEvenColor = 'lightgrey'
-    rowOddColor = 'white'
-
-    fig = go.Figure(data=[go.Table(
-        header=dict(
-            values=['<b>Sort</b>', '<b>Jan</b>', '<b>Feb</b>', '<b>Mar</b>', '<b>April</b>', '<b>May</b>', '<b>Jun</b>',
-                    '<b>Jul</b>', '<b>Aug</b>', '<b>sep</b>', '<b>Oct</b>', '<b>Nov</b>', '<b>Dec</b>'],
-            line_color='darkslategray',
-            fill_color=headerColor,
-            align=['left', 'center'],
-            font=dict(color='white', size=12)
-        ),
-        cells=dict(
-            values=[
-                ['PV_yield_day', 'Wind_yield_day', 'Net_grid_day', 'Energy_saved', 'Bill_without', 'Bill_with'],
-                [sum(pv_output[:744]) / 31, sum(w_output[:744]) / 31, sum(grid_output[:744]) / 31, sum(pv_output[:744]) + sum(w_output[:744]), 0.22*sum(load_output[:744]), 0.22*(sum(load_output[:744])-(sum(pv_output[:744]) + sum(w_output[:744])))],
-                [1300000, 20000, 70000, 2000, 130902000, 10000],
-                [1300000, 20000, 120000, 2000, 131222000, 10000],
-                [1400000, 20000, 90000, 2000, 14102000, 10000],
-                [1200000, 20000, 80000, 2000, 12120000, 10000],
-                [1300000, 20000, 70000, 2000, 130902000, 10000],
-                [1300000, 20000, 120000, 2000, 131222000, 10000],
-                [1400000, 20000, 90000, 2000, 14102000, 10000],
-                [1200000, 20000, 80000, 2000, 12120000, 10000],
-                [1300000, 20000, 70000, 2000, 130902000, 10000],
-                [1300000, 20000, 120000, 2000, 131222000, 10000],
-                [1400000, 20000, 90000, 2000, 14102000, 10000]],
-
-            line_color='darkslategray',
-            # 2-D list of colors for alternating rows
-            fill_color=[[rowOddColor, rowEvenColor, rowOddColor, rowEvenColor, rowOddColor] * 5],
-            align=['left', 'center'],
-            font=dict(color='darkslategray', size=11)
-        ))
-    ])
     global table_cache
-    if table_cache != fig:
-        table_cache = fig
+    if table_cache !=table:
+        table_cache = table
     else:
         raise PreventUpdate
-    return fig
+    return table
+
 
 
 #------------------------MQTT--------------------------------------------------------------------
