@@ -1,23 +1,24 @@
 import numpy as np
 import random
 import json
-
+import matplotlib.pyplot as plt
 
 class Car():
     def __init__(self, SoC):
         self.SoC = SoC
         # self.working = 0  # all cars home
-        self.powerMax = 6.6  # with level 2 station
+        self.powerMax = 10  # with level 2 station
         self.energyMax = 56
         self.energyMin = 0.2*56 + 4  # 20% plus enough for round trip to work
         self.currentEnergy = SoC * self.energyMax
         self.workdays = random.sample(range(5), 3) + [
             (random.randint(5, 6))]  # every car leaves home 3x from workdays, + 1 in the weekend, 0 means monday
-        self.efficiency = 0.964 #percentage
+        self.efficiency_store = 0.9 #percentage
+        self.efficiency_take = 0.93 #percentage
 
     def needCharging(self):
         if self.currentEnergy <= self.energyMin :
-            self.currentEnergy = self.currentEnergy + 2*self.efficiency  # this equals single trip to work
+            self.currentEnergy = self.currentEnergy + 2*self.efficiency_store  # this equals single trip to work
             return 2
         else:
             return 0
@@ -32,7 +33,7 @@ class Car():
         energy_surplus = max(self.currentEnergy - self.energyMin, 0)  # so surplus has to be larger than 0 or it will give 0
         power_out = min(energy_surplus, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E surplus constraint
-        self.currentEnergy = self.currentEnergy - power_out*(1.0/self.efficiency) # more energy is actually taken because of the conversion
+        self.currentEnergy = self.currentEnergy - power_out*(1.0/self.efficiency_take) # more energy is actually taken because of the conversion
         return power_out
 
     def storePower(self, power, day, hour):  # power should be negative because storing power
@@ -41,7 +42,7 @@ class Car():
         energy_chargeble = max(self.energyMax - self.currentEnergy, 0)  # has to be larger than 0 or it will give 0
         power_out = min(energy_chargeble, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E chargeble constraint
-        self.currentEnergy = self.currentEnergy + power_out*self.efficiency
+        self.currentEnergy = self.currentEnergy + power_out*self.efficiency_store
         return -power_out
 
     def returnFromWork(self, day):
@@ -92,7 +93,6 @@ global_cars = []
 
 
 def power_battery(powers, N_EV, N_hydro):
-    print(N_EV)
     global global_cars, global_hydrogen
     global_cars = []
     global_hydrogen = HydrogenTank(0.5, N_hydro * 396)
@@ -115,7 +115,7 @@ def power_battery(powers, N_EV, N_hydro):
     cars = []
     # create all cars
     for x in range(N_EV):
-        car = Car(0.7)
+        car = Car(0.5)
         cars.append(car)  # starting all cars with battery on 70%
         global_cars.append(car)
     for x in range(N_EV): #create a new cars list for the realtime battery as well
@@ -277,8 +277,42 @@ if __name__ == '__main__':
     # with open('powers.txt', 'r') as outfile:
     #     powers = json.load(outfile)
     # powers = {}
-    powers = {'power_load': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-              'power_solar': [1, 1, 1, 1, 1, 1, 110, 110, 110, 20, 20, 20, 120, 0, 0, 0, 0, 0, 0, 0, -2, 2]}
-    b = power_battery(powers, N_EV=1, N_hydro=20)
+    powers = {'power_load': [0]*23,
+              'power_solar': [100]*12+[-100]*11}
+    b = power_battery(powers, N_EV=1, N_hydro=1)
+    power_EV = b['power_EV']
+    power_hydrogen = b['power_hydrogen']
+    power_grid = b['power_grid']
+    EV_SoC = b['EV_SoC']
+    EV_SoC = [i * 100 for i in EV_SoC]
+    H_SoC = b['H_SoC']
+    H_SoC = [i * 100 for i in H_SoC]
+    time = np.arange(0, 23)
+
+
+    fig, ax1 = plt.subplots()
+
+    color = 'tab:red'
+    ax1.set_xlabel('Time (hour)')
+    ax1.set_ylabel('Power output (kW)', color=color)
+    ax1.plot(time, power_EV, color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+    color = 'tab:blue'
+    ax2.set_ylabel('SoC (%)', color=color)  # we already handled the x-label with ax1
+    ax2.plot(time, EV_SoC, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.legend()
+    plt.grid()
+    plt.title('Power flow and SoC of the EV')
+    # plt.gca().set_ylim(bottom=0)
+    plt.xlim(0, 23)
+    plt.savefig('test.png', bbox_inches='tight')
+
+    plt.show()
     # actuator_powers = {'power_load':5, 'power_wind':10}
     # a = power_battery_realtime(actuator_powers, 0)
