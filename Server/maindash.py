@@ -63,7 +63,7 @@ test_base64 = base64.b64encode(open(test_png, 'rb').read()).decode('ascii')
 
 app.layout = html.Div(children=[
     html.H1(
-        children='Energy System Integrator Demonstrator',
+        children='Energy System Integration Demonstrator',
         style={
             'textAlign': 'center',
             'color': colors['text']
@@ -144,6 +144,7 @@ app.layout = html.Div(children=[
     dcc.Graph(id='lcoe',),
     html.H3('payback time [years]',
             style={'color': colors['text']}),
+    html.Div(id='pay'),
     html.Div(id='table')
     ],id='output-all'),
 
@@ -401,30 +402,63 @@ def update_graph_live_pie(n):
 em_cache = 0
 
 @app.callback(Output('emission', 'figure'),
-              [Input('interval-component', 'n_intervals')])
-def update_graph_live_emission(n):
+              [Input('interval-component', 'n_intervals')],state=[State('dropdownpvtype', 'value'),
+                                                                   State('input', 'value'),
+                                                                   State('dropdownwind', 'value'),
+                                                                   State('inputwind', 'value'),
+                                                                   State('input H', 'value'),
+                                                                   State('input EV', 'value'),
+                                                                  ],)
+def update_graph_live_emission(n,type,number,typewind,numberwind,H,EV):
     global em_cache
 
+    WIND_EMISSIONS = {
+        'Aeolos10': {'P_rated': 10000, 'GHG': 0.000047,},
+        'Hummer60': {'P_rated': 60000, 'GHG': 0.000047,},
+        'Vestas V90 2MW': {'P_rated': 2000000, 'GHG': 7.2,}
+    }
+    PV_EMISSIONS = {
+        'Mono': {'watt_peak': 245, 'GHG': 0.00004702,},
+        'Poly': {'watt_peak': 295, 'GHG': 0.00005155,}
+    }
+    if type == 'HIT-N245SE10':
+        dpv = PV_EMISSIONS['Mono']
+    else:
+        dpv = PV_EMISSIONS['Poly']
+    if typewind == 'Aeolos10':
+        dwe= WIND_EMISSIONS['Aeolos10']
+    elif typewind == 'V90-2MW':
+        dwe = WIND_EMISSIONS['Vestas V90 2MW']
+    elif typewind == 'Hummer60':
+        dwe = WIND_EMISSIONS['Hummer60']
+
+    ghgwind=dwe['GHG']
+    ghgpv = dpv['GHG']
     tot_net = sumPositiveInts(dh['power_grid'])
     tot_pv = sum(dh['power_solar']) + tot_net * 0.05
-    pv_carbon = round(tot_pv*0.0000527,3)
+    pv_carbon = round(tot_pv*ghgpv,4)
     tot_wind = sum(dh['power_wind']) + tot_net* 0.08
-    wind_carbon = round(tot_wind * 0.0000175,3)
-    tot_bat=0
-    tot_gas = tot_net * 0.45
-    tot_coal = tot_net * 0.32
-    tot_oil = tot_net * 0.04
-    tot_nuclear = tot_net * 0.03
+    wind_carbon = round(tot_wind * ghgwind,4)
+    tot_h=H*0.007485
+    tot_ev=EV*0.327
+    tot_gas = (tot_net * 0.45)*0.000499
+    tot_coal = (tot_net * 0.32)*0.000888
+    tot_oil = (tot_net * 0.04)*0.000733
+    tot_nuclear = (tot_net * 0.03)*0.00029
     tot_other = tot_net * 0.03
-    sources = ['Solar', 'Wind', 'Battery']
+    sources = ['Solar', 'Wind', ' Hydrogen Battery', 'EV Battery','Natural Gas', 'Coal', 'Oil', 'Nuclear']
 
     fig = go.Figure(data=[
-        go.Bar(name='GHG', x=sources, y=[pv_carbon, wind_carbon, 2], marker_color='#b3b3b3',)
+        go.Bar(name='CO2', x=sources, y=[pv_carbon*0.81, wind_carbon*0.81, tot_h*0.81, tot_ev*0.81, tot_gas*0.81, tot_coal*0.81, tot_oil*0.81, tot_nuclear*0.81],marker_color='#323131' ),
+        go.Bar(name='Methane', x=sources, y=[pv_carbon*0.1, wind_carbon*0.1, tot_h*0.1, tot_ev*0.1, tot_gas*0.1, tot_coal*0.1, tot_oil*0.1, tot_nuclear*0.1],marker_color='#13AC24' ),
+        go.Bar(name='Nitrous Oxide', x=sources, y=[pv_carbon * 0.07, wind_carbon * 0.07, tot_h * 0.07, tot_ev * 0.07, tot_gas * 0.07, tot_coal * 0.07, tot_oil * 0.07, tot_nuclear * 0.07], marker_color='#1995F0'),
+        go.Bar(name='Fluorinated Gases', x=sources, y=[pv_carbon * 0.03, wind_carbon * 0.03, tot_h * 0.03, tot_ev * 0.03, tot_gas * 0.03, tot_coal * 0.03, tot_oil * 0.03, tot_nuclear * 0.03], marker_color='#EAF019')
     ])
     fig.update_layout(
         title="Life cycle emission",
         xaxis_title="Generation source",
         yaxis_title="Tonne CO2 equivalent",
+        height=1000, barmode='stack'
     )
     global em_cache
     if em_cache != fig:
@@ -443,7 +477,7 @@ lcoe_cache = 0
                                                                    State('input', 'value'),
                                                                    State('dropdownwind', 'value'),
                                                                    State('inputwind', 'value'),],)
-def update_graph_live_lcoe(n,type,number,typewind,numberwind):
+def update_graph_live_lcoe(n,type,number,typewind,numberwind,):
     global lcoe_cache
     WIND_FINANCE = {
         'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
@@ -512,7 +546,62 @@ def update_graph_live_lcoe(n,type,number,typewind,numberwind):
     return figure
 
 
+#-------------------paybacktime---------------------------------------------------------------
+pay_cache = 0
 
+@app.callback(Output('pay', 'children'),
+              [Input('interval-component', 'n_intervals',)],state=[State('dropdownpvtype', 'value'),
+                                                                   State('input', 'value'),
+                                                                   State('dropdownwind', 'value'),
+                                                                   State('inputwind', 'value'),],)
+def update_graph_live_pay(n,type,number,typewind,numberwind):
+    global pay_cache
+    WIND_FINANCE = {
+        'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
+        'Hummer60': {'P_rated': 60000, 'investment_cost': 73680.00, 'OM per KWh': 0.02},
+        'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per KWh': 0.02}
+    }
+    PV_FINANCE = {
+        'Mono residential': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 1.65, 'OM': 12.43},
+        'Mono commercial': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.35, 'OM': 11.32},
+        'Poly residential': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 1.65, 'OM': 12.43},
+        'Poly commercial': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.35, 'OM': 11.32}
+    }
+    discountRate = 0.09  # Nine percent per annum
+    if type == 'HIT-N245SE10':
+        output_pv = number* 245
+        if output_pv < 10000:
+            dpv = PV_FINANCE['Mono residential']
+        else:
+            dpv = PV_FINANCE['Mono commercial']
+    elif type == 'JAP60S01-290/SC':
+        output_pv = number * 295
+        if output_pv < 10000:
+            dpv = PV_FINANCE['Poly residential']
+        else:
+            dpv = PV_FINANCE['Poly commercial']
+    if typewind == 'Aeolos10':
+        dw= WIND_FINANCE['Aeolos10']
+    elif typewind == 'V90-2MW':
+        dw = WIND_FINANCE['Vestas V90 2MW']
+    elif typewind == 'Hummer60':
+        dw = WIND_FINANCE['Hummer60']
+    inverter_cost = roundup(number) * 0.2 * 505.74
+    Initialcost_pv = (number * dpv['price'] + (inverter_cost + dpv['watt_peak'] * dpv['bos'])/0.9)
+    Initialcost_wind= (numberwind * dw['investment_cost'])
+    total_investment= Initialcost_wind + Initialcost_pv
+    pos_net = sumPositiveInts(dh['power_grid'])
+    neg_net = sumNegativeInts(dh['power_grid'])
+
+    yearly_savings = (sum(dh['power_load'])*0.22 - pos_net*0.22 + neg_net*0.06)
+    paytime= total_investment/(0.1+yearly_savings)
+    paytimes=round(paytime,2)
+    global pay_cache
+    if pay_cache != paytime:
+        pay_cache = paytime
+    else:
+        raise PreventUpdate
+    return 'The payback time is expected to be {} years'.format(paytimes)
 #-------------------Table---------------------------------------------------------------
 table_cache = 0
 
