@@ -30,7 +30,7 @@ class Car():
     def takePower(self, power, day, hour):  # should come in a negative power
         if day in self.workdays and 9 <= hour <= 18:
             return 0  # car is working so no power
-        energy_surplus = max(self.currentEnergy - self.energyMin, 0)/self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
+        energy_surplus = max(self.currentEnergy - self.energyMin, 0)*self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
         power_out = min(energy_surplus, self.powerMax,-power)  # you have either the maximum power constraint or the E surplus constraint
         self.currentEnergy = self.currentEnergy - power_out/self.efficiency_take
         return power_out
@@ -66,7 +66,7 @@ class HydrogenTank:
         self.efficiency_take = 0.60
 
     def takePower(self, power):
-        energy_surplus = max(self.currentEnergy, 0)/self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
+        energy_surplus = max(self.currentEnergy, 0)*self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
 
         power_out = min(energy_surplus, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E surplus constraint
