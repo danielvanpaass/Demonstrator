@@ -43,9 +43,10 @@ def sumPositiveInts(listInt):
             m += x
     return(int(m))
 
-
 def roundup(x):
     return int(math.ceil(x / 10.0)) * 10
+
+start = time.time()
 
 dh.update({'time': pd.date_range(start='2019-01-01 00:00', freq='1h', periods=8760)})
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -150,7 +151,7 @@ app.layout = html.Div(children=[
 
     dcc.Interval(
         id='interval-component',
-        interval=2*1000,#in miliseconds
+        interval=4*1000,#in miliseconds
         n_intervals=0
     ),
     # empty dummy div
@@ -160,9 +161,10 @@ app.layout = html.Div(children=[
 
 
 def dash_update_solar(dict):
-    global dh
+    global dh,start
     dh.update(dict)
-    print("received")
+    print("received at" +str(time.time()-start))
+    start = time.time()
 
 
 # @app.callback([
@@ -359,6 +361,7 @@ pie_cache = 0
 @app.callback(Output('piechart', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_live_pie(n):
+
     global pie_cache
 
     tot_net = sumPositiveInts(dh['power_grid'])
@@ -739,13 +742,14 @@ def connect_and_run_dash(client, number_bat):
         state=[State('input load', 'value'), State('dropdownhousehold', 'value')],
     )
     def update_output_load(n_clicks,loadvalue, loadtype):
-        global load
+        global load,start
         if load != [loadvalue,loadtype]:
             load = [loadvalue,loadtype]
             data = {'N_load': loadvalue}
             data.update({'load_type': loadtype})
             client.publish("load", json.dumps(data))
-            print( 'load request')
+            print( 'load request at'  +str(time.time()-start))
+            start = time.time()
         return 0
 
     # @app.callback([
@@ -772,14 +776,15 @@ def connect_and_run_dash(client, number_bat):
         state=[State('dropdownpvtype', 'value'), State('input', 'value'), State('dropdown', 'value'),],
     )
     def update_output_solar(n_clicks, paneltype, panelvalue, tiltvalue):
-        global PV
+        global PV,start
         if PV != [paneltype, panelvalue, tiltvalue]:
             PV = [paneltype, panelvalue, tiltvalue]
             data = ({'pv_type': paneltype})
             data.update({'N_solar': panelvalue})
             data.update({'tilt_panel': tiltvalue})
             client.publish("solar", json.dumps(data))
-            print('solar request')
+            print('solar request at' +str(time.time()-start))
+            start = time.time()
         return 0
 
 
@@ -789,13 +794,14 @@ def connect_and_run_dash(client, number_bat):
         [State('dropdownwind', 'value'), State('inputwind', 'value')],  # add amount of windmills
     )
     def update_output_wind(n_clicks, turbinetype, windvalue):
-        global wind
+        global wind,start
         if wind != [turbinetype,windvalue]:
             wind = [turbinetype,windvalue]
             data = ({'turbine_type': turbinetype})
             data.update({'N_wind': windvalue})
             client.publish("wind", json.dumps(data))
-            print('wind request')
+            print('wind request at'  +str(time.time()-start))
+            start = time.time()
         return 0
 
 
@@ -805,7 +811,9 @@ def connect_and_run_dash(client, number_bat):
        [State('input EV', 'value'), State('input H', 'value')],
     )
     def update_output_bat(n_clicks,evvalue, hydrogen):
-       print('bat request')
+       global start
+       print('bat request at' +str(time.time()-start))
+       start = time.time()
        #hydrogen = 1 or hydrogen = 0
        number_bat.setValue(evvalue, hydrogen)
        return 0
