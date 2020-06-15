@@ -89,12 +89,12 @@ def power_out_load(N_load, type_load):
 if __name__ == '__main__':
 
     cel2 = power_out_load(1, 'saving')
-    cel2 = json.loads(cel2)['power_load'][0:23]
+    cel2 = json.loads(cel2)['power_load'][0:24]
 
 
     cel1 = power_out_load(1, 'average')
-    cel1 = json.loads(cel1)['power_load'][0:23]
-    time = np.arange(0, 23)
+    cel1 = json.loads(cel1)['power_load'][0:24]
+    time = np.arange(0, 24)
     plt.plot(time, cel1, label='Average household')
 
     plt.plot(time, cel2, label='Energy saving household')
@@ -104,8 +104,11 @@ if __name__ == '__main__':
     plt.xlabel('Time (hour)')
     plt.title('Electricity consumption of two types of households')
     plt.gca().set_ylim(bottom=0)
+    plt.xticks(np.arange(0, 25, step=1))
     plt.xlim(0, 23)
-    plt.savefig('test.png', bbox_inches='tight')
+    plt.grid(axis='both')
+
+    plt.savefig('2households.png', bbox_inches='tight')
 
     plt.show()
 
