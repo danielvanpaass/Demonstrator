@@ -12,8 +12,11 @@ from dash.dependencies import Input, Output, State
 import dash_table
 from dash_table.Format import Format, Scheme, Sign, Symbol
 import pandas as pd
+import math
 from collections import OrderedDict
 from plotly.subplots import make_subplots
+import numpy_financial as npf
+
 data = {}
 dh = {'power_solar': [1, 2, 3],
       'power_load': [1, 2, 3],
@@ -39,6 +42,10 @@ def sumPositiveInts(listInt):
         if x > 0:
             m += x
     return(int(m))
+
+
+def roundup(x):
+    return int(math.ceil(x / 10.0)) * 10
 
 dh.update({'time': pd.date_range(start='2019-01-01 00:00', freq='1h', periods=8760)})
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -133,7 +140,9 @@ app.layout = html.Div(children=[
     dcc.Graph(id='piechart', ),
     #dcc.Graph(id='piechartshare', animate=False,)
     dcc.Graph(id='emission', animate=True),
-    html.Div(id='Paybacktime'),
+    dcc.Graph(id='lcoe',animate=True),
+    html.H3('payback time [years]',
+            style={'color': colors['text']}),
     html.Div(id='table')
     ],id='output-all'),
 
@@ -348,7 +357,7 @@ pie_cache = 0
 @app.callback(Output('piechart', 'figure'),
               [Input('interval-component', 'n_intervals')])
 def update_graph_live_pie(n):
-    global wind_cache
+    global pie_cache
 
     tot_net = sumPositiveInts(dh['power_grid'])
     tot_pv = sum(dh['power_solar']) + tot_net * 0.05
@@ -430,35 +439,69 @@ def update_graph_live_emission(n):
 
 
 
-#-------------------Payback---------------------------------------------------------------
-pay_cache = 0
+#-------------------lcoe---------------------------------------------------------------
+lcoe_cache = 0
 
-@app.callback(Output('Paybacktime', 'children'),
-              [Input('interval-component', 'n_intervals')])
-def update_graph_live_pay(n):
-    global pay_cache
-    if pay_cache != dh['power_grid']:
-        pay_cache = dh['power_grid']
+@app.callback(Output('lcoe', 'figure'),
+              [Input('interval-component', 'n_intervals',)],state=[State('dropdownpvtype', 'value'), State('input', 'value'),],)
+def update_graph_live_lcoe(n,type,number):
+    global lcoe_cache
+    WIND_FINANCE = {
+        'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
+        'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per KWh': 0.02}
+    }
+    PV_FINANCE = {
+        'Mono residential': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.30, 'OM': 12.43},
+        'Mono commercial': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.25, 'OM': 11.32},
+        'Poly residential': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.30, 'OM': 12.43},
+        'Poly commercial': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.25, 'OM': 11.32}
+    }
+    discountRate = 0.09  # Nine percent per annum
+    total_solar_power = dh['power_solar']
+    if type == 'HIT-N245SE10':
+        output_pv = number* 245
+        if output_pv < 10000:
+            dpv = PV_FINANCE['Mono residential']
+        else:
+            dpv = PV_FINANCE['Mono commercial']
+    elif type == 'JAP60S01-290/SC':
+        output_pv = number * 295
+        if output_pv < 10000:
+            dpv = PV_FINANCE['Poly residential']
+        else:
+            dpv = PV_FINANCE['Poly commercial']
+    inverter_cost = roundup(number) * 0.1 * 505.74
+    Initialcost_pv = (number * dpv['price'] + inverter_cost + dpv['watt_peak'] * dpv['bos']) / 0.9
+    cashflows = [dpv['OM']] * 14
+    cashflows.extend([dpv['OM'] + inverter_cost])
+    cashflows.extend(
+        [dpv['OM'], dpv['OM'], dpv['OM'], dpv['OM'], dpv['OM'], dpv['OM'], dpv['OM'], dpv['OM'], dpv['OM'],
+         dpv['OM']])
+    yearlyyield = [sum(dh['power_solar'])]*25
+    netpresent = npf.npv(discountRate, cashflows)
+    totalyield = npf.npv(dpv['yearly_decay'], yearlyyield)
+    lcoe_pv = ((Initialcost_pv + netpresent) / totalyield).round(3)
 
-        WIND_FINANCE = {
-            'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
-            'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per KWh': 0.02}
-        }
-        PV_FINANCE = {
-            'Mono residential': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.30, 'OM': 12.43},
-            'Mono commercial': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.25, 'OM': 11.32},
-            'Poly residential': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.30, 'OM': 12.43},
-            'Poly commercial': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.25, 'OM': 11.32}
-        }
-        N_wind=1
-        N_solar=200
-        total_investment = 1000
-        yearly_savings = 200
-        payback = total_investment / yearly_savings
-        #print(payback)
+    figure = go.Figure(data=[
+        go.Bar(name='LCOE', x=['pv'], y=[lcoe_pv], marker_color='#00A6D6', )
+    ])
+    figure.update_layout(
+        title="Levelized cost of energy",
+        xaxis_title="Generation source",
+        yaxis_title="Tonne CO2 equivalent",
+        font=dict(
+            family="Courier New, monospace",
+            size=18,
+            color="#7f7f7f"
+        )
+    )
+
+    global lcoe_cache
+    if lcoe_cache != figure:
+        lcoe_cache = figure
     else:
         raise PreventUpdate
-    return payback
+    return figure
 
 
 
