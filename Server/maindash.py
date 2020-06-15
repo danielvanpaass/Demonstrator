@@ -102,6 +102,7 @@ app.layout = html.Div(children=[
         options=[
             {'label': 'Aeolos10', 'value': 'Aeolos10'},
             {'label': 'Hummer60', 'value': 'Hummer60'},
+            {'label': 'Vestas V90 2MW', 'value': 'V90-2MW'},
         ],
         value='Aeolos10'
     ),
@@ -139,8 +140,8 @@ app.layout = html.Div(children=[
     dcc.Graph(id='gridpower', ),
     dcc.Graph(id='piechart', ),
     #dcc.Graph(id='piechartshare', animate=False,)
-    dcc.Graph(id='emission', animate=True),
-    dcc.Graph(id='lcoe',animate=True),
+    dcc.Graph(id='emission',),
+    dcc.Graph(id='lcoe',),
     html.H3('payback time [years]',
             style={'color': colors['text']}),
     html.Div(id='table')
@@ -418,17 +419,12 @@ def update_graph_live_emission(n):
     sources = ['Solar', 'Wind', 'Battery']
 
     fig = go.Figure(data=[
-        go.Bar(name='GHG', x=sources, y=[pv_carbon, wind_carbon, 2], marker_color='#00A6D6',)
+        go.Bar(name='GHG', x=sources, y=[pv_carbon, wind_carbon, 2], marker_color='#b3b3b3',)
     ])
     fig.update_layout(
         title="Life cycle emission",
         xaxis_title="Generation source",
         yaxis_title="Tonne CO2 equivalent",
-        font=dict(
-            family="Courier New, monospace",
-            size=18,
-            color="#7f7f7f"
-        )
     )
     global em_cache
     if em_cache != fig:
@@ -443,18 +439,22 @@ def update_graph_live_emission(n):
 lcoe_cache = 0
 
 @app.callback(Output('lcoe', 'figure'),
-              [Input('interval-component', 'n_intervals',)],state=[State('dropdownpvtype', 'value'), State('input', 'value'),],)
-def update_graph_live_lcoe(n,type,number):
+              [Input('interval-component', 'n_intervals',)],state=[State('dropdownpvtype', 'value'),
+                                                                   State('input', 'value'),
+                                                                   State('dropdownwind', 'value'),
+                                                                   State('inputwind', 'value'),],)
+def update_graph_live_lcoe(n,type,number,typewind,numberwind):
     global lcoe_cache
     WIND_FINANCE = {
         'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
+        'Hummer60': {'P_rated': 60000, 'investment_cost': 73680.00, 'OM per KWh': 0.02},
         'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per KWh': 0.02}
     }
     PV_FINANCE = {
-        'Mono residential': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.30, 'OM': 12.43},
-        'Mono commercial': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.25, 'OM': 11.32},
-        'Poly residential': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.30, 'OM': 12.43},
-        'Poly commercial': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.25, 'OM': 11.32}
+        'Mono residential': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 1.65, 'OM': 12.43},
+        'Mono commercial': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 0.35, 'OM': 11.32},
+        'Poly residential': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 1.65, 'OM': 12.43},
+        'Poly commercial': {'watt_peak': 295, 'price': 89.45, 'yearly_decay': 0.0964, 'bos': 0.35, 'OM': 11.32}
     }
     discountRate = 0.09  # Nine percent per annum
     total_solar_power = dh['power_solar']
@@ -471,7 +471,7 @@ def update_graph_live_lcoe(n,type,number):
         else:
             dpv = PV_FINANCE['Poly commercial']
     inverter_cost = roundup(number) * 0.1 * 505.74
-    Initialcost_pv = (number * dpv['price'] + inverter_cost + dpv['watt_peak'] * dpv['bos']) / 0.9
+    Initialcost_pv = (number * dpv['price'] + (inverter_cost + dpv['watt_peak'] * dpv['bos'])/0.9)
     cashflows = [dpv['OM']] * 14
     cashflows.extend([dpv['OM'] + inverter_cost])
     cashflows.extend(
@@ -482,18 +482,26 @@ def update_graph_live_lcoe(n,type,number):
     totalyield = npf.npv(dpv['yearly_decay'], yearlyyield)
     lcoe_pv = ((Initialcost_pv + netpresent) / totalyield).round(3)
 
+    if typewind == 'Aeolos10':
+        dw= WIND_FINANCE['Aeolos10']
+    elif typewind == 'V90-2MW':
+        dw = WIND_FINANCE['Vestas V90 2MW']
+    elif typewind == 'Hummer60':
+        dw = WIND_FINANCE['Hummer60']
+    turbine_cost= numberwind * dw['investment_cost']
+    discountrate_decay_wind = 0.112
+    cashflowwind = [dw['OM per KWh'] * sum(dh['power_solar'])] * 20
+    yearlyyieldwind = [sum(dh['power_wind'])]*20
+    netpresentwind = npf.npv(discountRate, cashflowwind)
+    totalyieldwind = npf.npv(discountrate_decay_wind, yearlyyieldwind)
+    lcoe_w = ((turbine_cost + netpresentwind) / totalyieldwind).round(3)
     figure = go.Figure(data=[
-        go.Bar(name='LCOE', x=['pv'], y=[lcoe_pv], marker_color='#00A6D6', )
+        go.Bar(name='LCOE', x=['pv','wind'], y=[lcoe_pv,lcoe_w], marker_color='#00A6D6', )
     ])
     figure.update_layout(
         title="Levelized cost of energy",
         xaxis_title="Generation source",
-        yaxis_title="Tonne CO2 equivalent",
-        font=dict(
-            family="Courier New, monospace",
-            size=18,
-            color="#7f7f7f"
-        )
+        yaxis_title="€/kWh",
     )
 
     global lcoe_cache
@@ -596,7 +604,7 @@ def update_graph_live_table(n):
 
         }, {
             'id': 'Without',
-            'name': 'Energy cost Without (€)',
+            'name': 'Electricity bill old (€)',
             'type': 'numeric',
             'format': Format(
                 precision=2,
@@ -606,7 +614,7 @@ def update_graph_live_table(n):
             ),
         }, {
             'id': 'With',
-            'name': 'Energy cost With (€)',
+            'name': 'Electricity bill new (€)',
             'type': 'numeric',
             'format': Format(
                 precision=2,
