@@ -27,14 +27,14 @@ class Car():
         self.SoC = self.currentEnergy / self.energyMax
         return self.SoC
 
-    def takePower(self, power, day, hour):  # should come in a positieve power
+    def takePower(self, power, day, hour):  # should come in a negative power
         if day in self.workdays and 9 <= hour <= 18:
             return 0  # car is working so no power
         energy_surplus = max(self.currentEnergy - self.energyMin, 0)  # so surplus has to be larger than 0 or it will give 0
         power_out = min(energy_surplus, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E surplus constraint
-        self.currentEnergy = self.currentEnergy - power_out*(1.0/self.efficiency_take) # more energy is actually taken because of the conversion
-        return power_out
+        self.currentEnergy = self.currentEnergy - power_out # more energy is actually taken because of the conversion
+        return power_out*self.efficiency_take
 
     def storePower(self, power, day, hour):  # power should be negative because storing power
         if day in self.workdays and 9 <= hour <= 18:
@@ -67,10 +67,11 @@ class HydrogenTank:
 
     def takePower(self, power):
         energy_surplus = max(self.currentEnergy, 0)  # so surplus has to be larger than 0 or it will give 0
+
         power_out = min(energy_surplus, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E surplus constraint
-        self.currentEnergy = self.currentEnergy - power_out*(1.0/self.efficiency_take)
-        return power_out
+        self.currentEnergy = self.currentEnergy - power_out
+        return power_out*self.efficiency_take
 
     def storePower(self, power): # power should be negative because storing power
         energy_chargeble = max(self.energyMax - self.currentEnergy, 0)  # has to be larger than 0 or it will give 0
@@ -125,6 +126,7 @@ def power_battery(powers, N_EV, N_hydro):
     hydro = HydrogenTank(0.5, N_hydro * 396)
 
     # go through the year
+    eps = 0.00000001
     for x in range(0, len(power_load)):
         # sort all cars by SoC, starting from lowest
         # cars.sort(key=lambda car: car.getSoC())
@@ -141,6 +143,7 @@ def power_battery(powers, N_EV, N_hydro):
         excess_power = excess_power - EV_load
         EV_load_out[x] = EV_load
         excess_power_out[x] = excess_power
+
         if excess_power > 0:  # positive so needs to store energy
             stored_power_EV = 0
             for i in range(0, N_EV):
@@ -149,15 +152,15 @@ def power_battery(powers, N_EV, N_hydro):
                 excess_power = excess_power + stored_power
                 # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power on this
                 if abs(
-                        excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
+                        excess_power) < eps:  # if part of the cars were enough, not the whole list will be looked through
                     break
             PEV_out[x] = stored_power_EV
-            if excess_power > 0.001 and N_hydro:  # this means that all cars had not enough to store the kwh
+            if excess_power > eps and N_hydro:  # this means that all cars had not enough to store the kwh
 
                 stored_power = hydro.storePower(-excess_power)
                 PH_out[x] = stored_power
                 excess_power = excess_power + stored_power
-            if excess_power > 0.001:
+            if excess_power > eps:
                 stored_power = -excess_power
                 Pgrid_out[x] = stored_power
         else:  # negative so needs to take energy from batteries
@@ -168,14 +171,14 @@ def power_battery(powers, N_EV, N_hydro):
                 excess_power = excess_power + power_taken
                 # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power on this
                 if abs(
-                        excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
+                        excess_power) < eps:  # if part of the cars were enough, not the whole list will be looked through
                     break
             PEV_out[x] = power_taken_EV
-            if abs(excess_power) > 0.001 and N_hydro:  # this means that not all cars had enough energy
+            if abs(excess_power) > eps and N_hydro:  # this means that not all cars had enough energy
                 power_taken = hydro.takePower(excess_power)
                 PH_out[x] = power_taken
                 excess_power = excess_power + power_taken
-            if abs(excess_power) > 0.001:
+            if abs(excess_power) > eps:
                 power_taken = -excess_power
                 Pgrid_out[x] = power_taken
         for i in range(0, N_EV):
@@ -204,6 +207,7 @@ def power_battery_realtime(actuator_powers, hour):
     power_load = actuator_powers['power_load']
     global global_hydrogen, global_cars
     N_EV = len(global_cars)
+    eps = 0.00000001
     excess_power = power_source - power_load
     day = hour // 24
     day_of_week = day % 7
@@ -227,14 +231,14 @@ def power_battery_realtime(actuator_powers, hour):
             # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power
             # on this
             if abs(
-                    excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
+                    excess_power) < eps:  # if part of the cars were enough, not the whole list will be looked through
                 break
         PEV_out = stored_power_EV
-        if excess_power > 0.001:  # this means that all cars had not enough to store the kwh
+        if excess_power > eps:  # this means that all cars had not enough to store the kwh
             stored_power = global_hydrogen.storePower(-excess_power)
             excess_power = excess_power + stored_power
             PH_out = stored_power
-        if excess_power > 0.001:
+        if excess_power > eps:
             stored_power = -excess_power
             Pgrid_out = stored_power
     else:  # negative so needs to take energy from batteries
@@ -246,14 +250,14 @@ def power_battery_realtime(actuator_powers, hour):
 
             # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power
             # on this
-            if abs(excess_power) < 0.001:  # if part of the cars were enough, not the whole list will be looked through
+            if abs(excess_power) < eps:  # if part of the cars were enough, not the whole list will be looked through
                 break
         PEV_out = power_taken_EV
-        if abs(excess_power) > 0.001:  # this means that not all cars had enough energy
+        if abs(excess_power) > eps:  # this means that not all cars had enough energy
             power_taken = global_hydrogen.takePower(excess_power)
             excess_power = excess_power + power_taken
             PH_out = power_taken
-        if abs(excess_power) > 0.001:
+        if abs(excess_power) > eps:
             power_taken = -excess_power  # from grid
             Pgrid_out = power_taken
     EV_SoC_out = 0.0
