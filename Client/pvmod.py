@@ -1,6 +1,4 @@
 """An implementation of a solar energy model"""
-# size, angle(panel), irradiance, efficiency, temperature reliance
-import numpy as np
 
 # Datasheet imported values
 PV_PARAMETERS = {
@@ -15,4 +13,4 @@ def power_calc_solar(irradiance, temperature, pv_type):
     selectedpv = PV_PARAMETERS[pv_type]
     p_nom = selectedpv['length'] * selectedpv['width'] * selectedpv['efficiency'] * irradiance
     p_out = (((selectedpv['t_coefficient'] * (temperature - 25)) / 100) * p_nom) + p_nom
-    return p_out*0.961
+    return p_out*0.972
