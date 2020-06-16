@@ -476,8 +476,10 @@ lcoe_cache = 0
               [Input('interval-component', 'n_intervals',)],state=[State('dropdownpvtype', 'value'),
                                                                    State('input', 'value'),
                                                                    State('dropdownwind', 'value'),
-                                                                   State('inputwind', 'value'),],)
-def update_graph_live_lcoe(n,type,number,typewind,numberwind,):
+                                                                   State('inputwind', 'value'),
+                                                                   State('input H', 'value'),
+                                                                   State('input EV', 'value'),],)
+def update_graph_live_lcoe(n,type,number,typewind,numberwind,H,EV):
     global lcoe_cache
     WIND_FINANCE = {
         'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
@@ -529,21 +531,38 @@ def update_graph_live_lcoe(n,type,number,typewind,numberwind,):
     netpresentwind = npf.npv(discountRate, cashflowwind)
     totalyieldwind = npf.npv(discountrate_decay_wind, yearlyyieldwind)
     lcoe_w = ((turbine_cost + netpresentwind) / totalyieldwind).round(3)
-    figure = go.Figure(data=[
-        go.Bar(name='LCOE', x=['pv','wind'], y=[lcoe_pv,lcoe_w], marker_color='#00A6D6', )
+    bat_cost=H*2000 + EV*5000
+    bat_cap=H*396 + EV*56
+    lcoe_s = round(((bat_cost) / bat_cap),2)
+    fig = go.Figure(data=[
+        go.Bar(name='LCOE', x=['pv', 'wind', 'storage'], y=[lcoe_pv, lcoe_w, lcoe_s/1000], marker_color='#00A6D6', )
     ])
-    figure.update_layout(
-        title="Levelized cost of energy",
-        xaxis_title="Generation source",
-        yaxis_title="€/kWh",
-    )
+    # fig = make_subplots(rows=1, cols=2, specs=[[{"type": "bar"}, {"type": "bar"}]])
+    # fig.add_trace(go.Bar(
+    #     y=[lcoe_pv,lcoe_w],
+    #     x=['pv','wind',],
+    #     domain=dict(x=[0, 0.5]),
+    #     name="LCOE energy"),
+    #     row=1, col=1)
+    #
+    # fig.add_trace(go.Bar(
+    #     y=[lcoe_s],
+    #     x=['storage'],
+    #     domain=dict(x=[0.5, 1.0]),
+    #     name="LCOE storage"),
+    #     row=1, col=2)
+    # fig.update_layout(
+    #     title="Levelized cost of energy",
+    #     xaxis_title="Generation source",
+    #     yaxis_title="€/kWh",
+    # )
 
     global lcoe_cache
-    if lcoe_cache != figure:
-        lcoe_cache = figure
+    if lcoe_cache != fig:
+        lcoe_cache = fig
     else:
         raise PreventUpdate
-    return figure
+    return fig
 
 
 #-------------------paybacktime---------------------------------------------------------------
