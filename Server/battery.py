@@ -1,24 +1,24 @@
 import numpy as np
 import random
-import json
 import matplotlib.pyplot as plt
+
 
 class Car():
     def __init__(self, SoC):
         self.SoC = SoC
-        # self.working = 0  # all cars home
-        self.powerMax = 10  # with level 2 station
+        self.powerMax = 10
         self.energyMax = 56
-        self.energyMin = 0.2*56 + 4  # 20% plus enough for round trip to work
+        self.energyMin = 0.2 * 56 + 4  # 20% plus enough for round trip to work
         self.currentEnergy = SoC * self.energyMax
         self.workdays = random.sample(range(5), 3) + [
             (random.randint(5, 6))]  # every car leaves home 3x from workdays, + 1 in the weekend, 0 means monday
-        self.efficiency_store = 0.9 #percentage
-        self.efficiency_take = 0.93 #percentage
+        self.efficiency_store = 0.9  # percentage
+        self.efficiency_take = 0.93  # percentage
 
+    # check if car needs to charge
     def needCharging(self):
-        if self.currentEnergy <= self.energyMin :
-            self.currentEnergy = self.currentEnergy + 2*self.efficiency_store  # this equals single trip to work
+        if self.currentEnergy <= self.energyMin:
+            self.currentEnergy = self.currentEnergy + 2 * self.efficiency_store
             return 2
         else:
             return 0
@@ -27,21 +27,25 @@ class Car():
         self.SoC = self.currentEnergy / self.energyMax
         return self.SoC
 
-    def takePower(self, power, day, hour):  # should come in a negative power
+    def takePower(self, power, day, hour):
+        # check if car is at work
         if day in self.workdays and 9 <= hour <= 18:
-            return 0  # car is working so no power
-        energy_surplus = max(self.currentEnergy - self.energyMin, 0)*self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
-        power_out = min(energy_surplus, self.powerMax,-power)  # you have either the maximum power constraint or the E surplus constraint
-        self.currentEnergy = self.currentEnergy - power_out/self.efficiency_take
+            return 0
+        energy_surplus = max(self.currentEnergy - self.energyMin,
+                             0) * self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
+        power_out = min(energy_surplus, self.powerMax,
+                        -power)  # you have either the maximum power constraint or the E surplus constraint
+        self.currentEnergy = self.currentEnergy - power_out / self.efficiency_take
         return power_out
 
     def storePower(self, power, day, hour):  # power should be negative because storing power
         if day in self.workdays and 9 <= hour <= 18:
             return 0  # car is working so no power
-        energy_chargeble = max(self.energyMax - self.currentEnergy, 0)/self.efficiency_store  # has to be larger than 0 or it will give 0
+        energy_chargeble = max(self.energyMax - self.currentEnergy,
+                               0) / self.efficiency_store  # has to be larger than 0 or it will give 0
         power_out = min(energy_chargeble, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E chargeble constraint
-        self.currentEnergy = self.currentEnergy + power_out*self.efficiency_store
+        self.currentEnergy = self.currentEnergy + power_out * self.efficiency_store
         return -power_out
 
     def returnFromWork(self, day):
@@ -66,18 +70,20 @@ class HydrogenTank:
         self.efficiency_take = 0.60
 
     def takePower(self, power):
-        energy_surplus = max(self.currentEnergy, 0)*self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
+        energy_surplus = max(self.currentEnergy,
+                             0) * self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
 
         power_out = min(energy_surplus, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E surplus constraint
-        self.currentEnergy = self.currentEnergy - power_out/self.efficiency_take
+        self.currentEnergy = self.currentEnergy - power_out / self.efficiency_take
         return power_out
 
-    def storePower(self, power): # power should be negative because storing power
-        energy_chargeble = max(self.energyMax - self.currentEnergy, 0)/self.efficiency_store  # has to be larger than 0 or it will give 0
+    def storePower(self, power):  # power should be negative because storing power
+        energy_chargeble = max(self.energyMax - self.currentEnergy,
+                               0) / self.efficiency_store  # has to be larger than 0 or it will give 0
         power_out = min(energy_chargeble, self.powerMax,
                         -power)  # you have either the maximum power constraint or the E chargeble constraint
-        self.currentEnergy = self.currentEnergy + power_out*self.efficiency_store
+        self.currentEnergy = self.currentEnergy + power_out * self.efficiency_store
         return -power_out
 
     def getSoC(self):
@@ -119,7 +125,7 @@ def power_battery(powers, N_EV, N_hydro):
         car = Car(0.5)
         cars.append(car)  # starting all cars with battery on 70%
         global_cars.append(car)
-    for x in range(N_EV): #create a new cars list for the realtime battery as well
+    for x in range(N_EV):  # create a new cars list for the realtime battery as well
         car = Car(0.5)
         global_cars.append(car)
     # create Hydrogen tank
@@ -144,9 +150,9 @@ def power_battery(powers, N_EV, N_hydro):
         EV_load_out[x] = EV_load
         excess_power_out[x] = excess_power
         for i in range(0, N_EV):
-            EV_SoC_out[x] = EV_SoC_out[x] + cars[i].getSoC() / N_EV *100  # store the average SoC in %
+            EV_SoC_out[x] = EV_SoC_out[x] + cars[i].getSoC() / N_EV * 100  # store the average SoC in %
         if N_hydro:
-            H_SoC_out[x] = hydro.getSoC()*100
+            H_SoC_out[x] = hydro.getSoC() * 100
         if excess_power > 0:  # positive so needs to store energy
             stored_power_EV = 0
             for i in range(0, N_EV):
@@ -280,8 +286,8 @@ if __name__ == '__main__':
     # with open('powers.txt', 'r') as outfile:
     #     powers = json.load(outfile)
     # powers = {}
-    powers = {'power_load': [0]*24,
-              'power_solar': [2]*12+[-2]*12}
+    powers = {'power_load': [0] * 24,
+              'power_solar': [2] * 12 + [-2] * 12}
     b = power_battery(powers, N_EV=1, N_hydro=1)
     power_EV = b['power_EV']
     power_hydrogen = b['power_hydrogen']
@@ -290,7 +296,6 @@ if __name__ == '__main__':
     H_SoC = b['H_SoC']
 
     time = np.arange(0, 24)
-
 
     fig, ax1 = plt.subplots()
     color = 'tab:red'
@@ -311,7 +316,7 @@ if __name__ == '__main__':
     plt.title('Power flow and SoC of the EV')
     # plt.gca().set_ylim(bottom=0)
     plt.xticks(np.arange(0, 25, step=1))
-    plt.xlim(0,23)
+    plt.xlim(0, 23)
     plt.savefig('EVnormal.png', bbox_inches='tight')
     plt.close()
 
@@ -336,7 +341,7 @@ if __name__ == '__main__':
     plt.title('Power flow and SoC of the hydrogen tank')
     # plt.gca().set_ylim(bottom=0)
     plt.xticks(np.arange(0, 25, step=1))
-    plt.xlim(0,23)
+    plt.xlim(0, 23)
     plt.savefig('hydrogennormal.png', bbox_inches='tight')
     plt.close()
 
@@ -348,8 +353,6 @@ if __name__ == '__main__':
     power_grid = b['power_grid']
     EV_SoC = b['EV_SoC']
     H_SoC = b['H_SoC']
-
-
 
     fig, ax1 = plt.subplots()
 
@@ -371,7 +374,7 @@ if __name__ == '__main__':
     plt.title('Power flow and SoC of the hydrogen tank')
     # plt.gca().set_ylim(bottom=0)
     plt.xticks(np.arange(0, 25, step=1))
-    plt.xlim(0,23)
+    plt.xlim(0, 23)
     plt.savefig('hydrogenextreme.png', bbox_inches='tight')
     plt.close()
 
@@ -394,7 +397,7 @@ if __name__ == '__main__':
     plt.title('Power flow and SoC of the EV')
     # plt.gca().set_ylim(bottom=0)
     plt.xticks(np.arange(0, 25, step=1))
-    plt.xlim(0,23)
+    plt.xlim(0, 23)
     plt.savefig('EVextreme.png', bbox_inches='tight')
     plt.close()
 
@@ -405,12 +408,11 @@ if __name__ == '__main__':
     plt.title('Power flow from the grid')
     # plt.gca().set_ylim(bottom=0)
     plt.xticks(np.arange(0, 25, step=1))
-    plt.xlim(0,23)
+    plt.xlim(0, 23)
     plt.savefig('gridextreme.png', bbox_inches='tight')
 
     plt.show()
     plt.close()
-
 
     # actuator_powers = {'power_load':5, 'power_wind':10}
     # a = power_battery_realtime(actuator_powers, 0)
