@@ -16,6 +16,11 @@ import math
 from collections import OrderedDict
 from plotly.subplots import make_subplots
 import numpy_financial as npf
+#disable console notifications
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+#============
 
 data = {}
 dh = {'power_solar': [1, 2, 3],
