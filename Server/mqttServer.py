@@ -23,7 +23,6 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, message):
     received_data = json.loads(message.payload.decode("utf-8"))
-    print(received_data)
     topic = message.topic
     if topic == "year_data":
         year_data.update(received_data)

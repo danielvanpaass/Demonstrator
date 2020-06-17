@@ -1,9 +1,13 @@
 import dash
-import dash_core_components as dcc
 import dash_html_components as html
-import plotly.graph_objects as go
+import dash_table
+import dash_table.FormatTemplate as FormatTemplate
+from dash_table.Format import Format, Scheme, Sign, Symbol
+from dash_table.Format import Sign
+import pandas as pd
+from collections import OrderedDict
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash(__name__)
 
 dh = {'power_solar': [1, 2, 3],
       'power_load': [1, 2, 3],
@@ -12,48 +16,91 @@ dh = {'power_solar': [1, 2, 3],
       'EV_SoC': [1, 2, 3],
       'H_SoC': [1, 2, 3],
       }
-pv_output = dh['power_solar']
-w_output = dh['power_wind']
+pv_o = dh['power_solar']
+w_o = dh['power_wind']
+g_o = dh['power_grid']
+l_o=dh['power_load']
 
-headerColor = '#00A6D6'
-rowEvenColor = 'lightgrey'
-rowOddColor = 'white'
-fik = go.Figure(data=[go.Table(
-    header=dict(
-    values=['<b>Sort</b>','<b>Jan</b>','<b>Feb</b>','<b>Mar</b>','<b>April</b>','<b>May</b>','<b>Jun</b>','<b>Jul</b>','<b>Aug</b>','<b>sep</b>','<b>Oct</b>','<b>Nov</b>','<b>Dec</b>'],
-    line_color='darkslategray',
-    fill_color=headerColor,
-    align=['left','center'],
-    font=dict(color='white', size=12)
-  ),
-  cells=dict(
-    values=[
-      ['PV_yield_day', 'Wind_yield_day', 'Net_grid_day', 'Energy_saved', 'Bill_without', 'Bill_with'],
-      [sum(pv_output[:3])/3, sum(w_output[:3])/3, 80000, 2000, 12120000, 10000],
-      [1300000, 20000, 70000, 2000, 130902000, 10000],
-      [1300000, 20000, 120000, 2000, 131222000, 10000],
-      [1400000, 20000, 90000, 2000, 14102000, 10000],
-      [1200000, 20000, 80000, 2000, 12120000, 10000],
-      [1300000, 20000, 70000, 2000, 130902000, 10000],
-      [1300000, 20000, 120000, 2000, 131222000, 10000],
-      [1400000, 20000, 90000, 2000, 14102000, 10000],
-      [1200000, 20000, 80000, 2000, 12120000, 10000],
-      [1300000, 20000, 70000, 2000, 130902000, 10000],
-      [1300000, 20000, 120000, 2000, 131222000, 10000],
-      [1400000, 20000, 90000, 2000, 14102000, 10000]],
+df_typing_formatting = pd.DataFrame(OrderedDict([
+    ('Month', ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August','September','October', 'November', 'December', 'Total 2019']),
+    ('PV', [sum(pv_o[:744])/31, 766000, 431000, 382000, 341000, 316000, 276000, 173000,1,1,1,1,1]),
+    ('Wind', [sum(w_o[:744])/31, -0.051, 0.001, 0.083, 0.063, 0.024, -0.065, 0.012,1,1,1,1,1]),
+    ('Grid', [sum(g_o[:744])/31, 766000, 431000, 382000, 341000, 316000, 276000, 173000,1,1,1,1,1]),
+    ('Electricity Saved', [(sum(l_o[:744])-sum(w_o[:744])-sum(pv_o[:744]))/31, -0.051, 0.001, 0.083, 0.063, 0.024, -0.065, 0.012,1,1,1,1,1]),
+    ('Without', [(sum(l_o[:744])*0.22)/31, 766000, 431000, 382000, 341000.001, 316000, 276000, 173000,1,1,1,1,1]),
+    ('With', [0.143, -0.051, 0.001, 0.083, 0.063, 0.024, -0.065, 0.012,1,1,1,1,1]),
+]))
 
-    line_color='darkslategray',
-    # 2-D list of colors for alternating rows
-    fill_color = [[rowOddColor,rowEvenColor,rowOddColor, rowEvenColor,rowOddColor]*5],
-    align = ['left', 'center'],
-    font = dict(color = 'darkslategray', size = 11)
-    ))
-])
+app.layout = html.Div([
+    dash_table.DataTable(
+        id='typing_formatting_1',
+        data=df_typing_formatting.to_dict('rows'),
+        columns=[{
+            'id': 'Month',
+            'name': 'City',
+            'type': 'text'
+        }, {
+            'id': 'PV',
+            'name': 'PV output (KWh) / day',
+            'type': 'numeric',
+            'format': Format(
+                precision=1,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'KWh')
+        }, {
+            'id': 'Wind',
+            'name': 'PV output (KWh) / day',
+            'type': 'numeric',
+            'format': Format(
+                precision=1,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'KWh')
+        },  {
+            'id': 'Grid',
+            'name': 'Grid output (KWh) / day',
+            'type': 'numeric',
+            'format': Format(
+                precision=1,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'KWh')
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+        },  {
+            'id': 'Electricity Saved',
+            'name': 'Electricity Saved (KWh) / day',
+            'type': 'numeric',
+            'format': Format(
+                precision=1,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'KWh')
 
-app.layout = html.Div(children=[
-dcc.Graph(figure=fik)
+        }, {
+            'id': 'Without',
+            'name': 'Energy cost Without (€)',
+            'type': 'numeric',
+            'format': Format(
+                precision=2,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'€'
+            ),
+        }, {
+            'id': 'With',
+            'name': 'Energy cost With (€)',
+            'type': 'numeric',
+            'format': Format(
+                precision=2,
+                scheme=Scheme.fixed,
+                symbol=Symbol.yes,
+                symbol_suffix=u'€'
+            )
+        },
+        ],
+        editable=True
+    )
 ])
 
 if __name__ == '__main__':
