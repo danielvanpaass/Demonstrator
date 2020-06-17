@@ -27,37 +27,35 @@ class Car():
         self.SoC = self.currentEnergy / self.energyMax
         return self.SoC
 
+    # this method can be requested with a certain power that needs to be discharged, and will check how much of it
+    # can be provided
     def takePower(self, power, day, hour):
-        # check if car is at work
         if day in self.workdays and 9 <= hour <= 18:
             return 0
         energy_surplus = max(self.currentEnergy - self.energyMin,
-                             0) * self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
+                             0) * self.efficiency_take
         power_out = min(energy_surplus, self.powerMax,
-                        -power)  # you have either the maximum power constraint or the E surplus constraint
+                        -power)
         self.currentEnergy = self.currentEnergy - power_out / self.efficiency_take
         return power_out
 
-    def storePower(self, power, day, hour):  # power should be negative because storing power
+    def storePower(self, power, day, hour):
         if day in self.workdays and 9 <= hour <= 18:
-            return 0  # car is working so no power
+            return 0
         energy_chargeble = max(self.energyMax - self.currentEnergy,
-                               0) / self.efficiency_store  # has to be larger than 0 or it will give 0
+                               0) / self.efficiency_store
         power_out = min(energy_chargeble, self.powerMax,
-                        -power)  # you have either the maximum power constraint or the E chargeble constraint
+                        -power)
         self.currentEnergy = self.currentEnergy + power_out * self.efficiency_store
         return -power_out
 
+    # this function is to be called at the end of the day, cars that were at work will now have less charge
     def returnFromWork(self, day):
         if day in self.workdays:
-            self.currentEnergy = self.currentEnergy - 4  # takes 4 kwh round trip to work
-            return 1  # sucessful
-
+            self.currentEnergy = self.currentEnergy - 4  # takes 4 kwh, a round trip to work
+            return 1
         else:
             return 0
-
-    # def setWork(self, workStatus):
-    #     self.working = workStatus
 
 
 class HydrogenTank:
@@ -71,18 +69,18 @@ class HydrogenTank:
 
     def takePower(self, power):
         energy_surplus = max(self.currentEnergy,
-                             0) * self.efficiency_take  # so surplus has to be larger than 0 or it will give 0
+                             0) * self.efficiency_take
 
         power_out = min(energy_surplus, self.powerMax,
-                        -power)  # you have either the maximum power constraint or the E surplus constraint
+                        -power)
         self.currentEnergy = self.currentEnergy - power_out / self.efficiency_take
         return power_out
 
-    def storePower(self, power):  # power should be negative because storing power
+    def storePower(self, power):
         energy_chargeble = max(self.energyMax - self.currentEnergy,
-                               0) / self.efficiency_store  # has to be larger than 0 or it will give 0
+                               0) / self.efficiency_store
         power_out = min(energy_chargeble, self.powerMax,
-                        -power)  # you have either the maximum power constraint or the E chargeble constraint
+                        -power)
         self.currentEnergy = self.currentEnergy + power_out * self.efficiency_store
         return -power_out
 
@@ -95,14 +93,8 @@ class HydrogenTank:
         self.currentEnergy = SoC * self.energyMax
 
 
-global_hydrogen = 0
-global_cars = []
-
-
 def power_battery(powers, N_EV, N_hydro):
-    global global_cars, global_hydrogen
-    global_cars = []
-    global_hydrogen = HydrogenTank(0.5, N_hydro * 396)
+    """Go through the list of all powers and decide how the storage should be charged/discharged"""
     if 'power_load' in powers:
         power_load = np.array(powers['power_load'])
     else:
@@ -121,21 +113,15 @@ def power_battery(powers, N_EV, N_hydro):
     EV_load_out = np.zeros((len(power_load),))
     cars = []
     # create all cars
-    for x in range(N_EV):
-        car = Car(0.5)
-        cars.append(car)  # starting all cars with battery on 70%
-        global_cars.append(car)
     for x in range(N_EV):  # create a new cars list for the realtime battery as well
         car = Car(0.5)
-        global_cars.append(car)
+        cars.append(car)
     # create Hydrogen tank
     hydro = HydrogenTank(0.5, N_hydro * 396)
 
     # go through the year
-    eps = 0.00000001
+    eps = 0.00000001  # define epsilon for comparisons with floats
     for x in range(0, len(power_load)):
-        # sort all cars by SoC, starting from lowest
-        # cars.sort(key=lambda car: car.getSoC())
         excess_power = power_source[x] - power_load[x]
         day = x // 24
         day_of_week = day % 7
@@ -159,16 +145,18 @@ def power_battery(powers, N_EV, N_hydro):
                 stored_power = cars[i].storePower(-excess_power, day_of_week, hour_of_day)
                 stored_power_EV = stored_power_EV + stored_power
                 excess_power = excess_power + stored_power
-                # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power on this
+                # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess
+                # power on this
                 if abs(
-                        excess_power) < eps:  # if part of the cars were enough, not the whole list will be looked through
+                        excess_power) < eps:
                     break
             PEV_out[x] = stored_power_EV
-            if excess_power > eps and N_hydro:  # this means that all cars had not enough to store the kwh
+            if excess_power > eps and N_hydro:  # this means that the cars had not enough to store the kwh
 
                 stored_power = hydro.storePower(-excess_power)
                 PH_out[x] = stored_power
                 excess_power = excess_power + stored_power
+            # assign what's left to the grid
             if excess_power > eps:
                 stored_power = -excess_power
                 Pgrid_out[x] = stored_power
@@ -178,18 +166,19 @@ def power_battery(powers, N_EV, N_hydro):
                 power_taken = cars[i].takePower(excess_power, day_of_week, hour_of_day)
                 power_taken_EV = power_taken_EV + power_taken
                 excess_power = excess_power + power_taken
-                # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power on this
                 if abs(
-                        excess_power) < eps:  # if part of the cars were enough, not the whole list will be looked through
+                        excess_power) < eps:
                     break
             PEV_out[x] = power_taken_EV
-            if abs(excess_power) > eps and N_hydro:  # this means that not all cars had enough energy
+            # cars could not provide enough, look at the hydro tank
+            if abs(excess_power) > eps and N_hydro:
                 power_taken = hydro.takePower(excess_power)
                 PH_out[x] = power_taken
                 excess_power = excess_power + power_taken
             if abs(excess_power) > eps:
                 power_taken = -excess_power
                 Pgrid_out[x] = power_taken
+    # Assign the values for export
     Pgrid = np.around(Pgrid_out.astype(np.float), 3)
     PH = np.around(PH_out.astype(np.float), 3)
     PEV = np.around(PEV_out.astype(np.float), 3)
@@ -200,85 +189,6 @@ def power_battery(powers, N_EV, N_hydro):
     data = {'power_grid': Pgrid.tolist(), 'power_EV': PEV.tolist(), 'power_hydrogen': PH.tolist(),
             'EV_SoC': EV_SoC.tolist(), 'excess_power': excess_power.tolist(), 'H_SoC': H_SoC.tolist(),
             'EV_load': EV_load.tolist()}
-    return data
-
-
-def power_battery_realtime(actuator_powers, hour):
-    power_source = 0
-    if 'power_solar' in actuator_powers:
-        power_source += actuator_powers['power_solar']
-    if 'power_wind' in actuator_powers:
-        power_source += actuator_powers['power_wind']
-    power_load = actuator_powers['power_load']
-    global global_hydrogen, global_cars
-    N_EV = len(global_cars)
-    eps = 0.00000001
-    excess_power = power_source - power_load
-    day = hour // 24
-    day_of_week = day % 7
-    hour_of_day = hour % 24
-    if hour_of_day == 19:  # return from work
-        for i in range(0, N_EV):
-            global_cars[i].returnFromWork(day_of_week)
-    EV_load = 0
-    for i in range(0, N_EV):
-        EV_load = EV_load + global_cars[i].needCharging()
-    excess_power = excess_power + EV_load
-    excess_power_out = excess_power
-    EV_load_out = EV_load
-    Pgrid_out = PH_out = 0.0
-    if excess_power > 0:  # positive so needs to store energy
-        stored_power_EV = 0.0
-        for i in range(0, N_EV):
-            stored_power = global_cars[i].storePower(-excess_power, day_of_week, hour_of_day)
-            stored_power_EV = stored_power_EV + stored_power
-            excess_power = excess_power + stored_power
-            # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power
-            # on this
-            if abs(
-                    excess_power) < eps:  # if part of the cars were enough, not the whole list will be looked through
-                break
-        PEV_out = stored_power_EV
-        if excess_power > eps:  # this means that all cars had not enough to store the kwh
-            stored_power = global_hydrogen.storePower(-excess_power)
-            excess_power = excess_power + stored_power
-            PH_out = stored_power
-        if excess_power > eps:
-            stored_power = -excess_power
-            Pgrid_out = stored_power
-    else:  # negative so needs to take energy from batteries
-        power_taken_EV = 0.0
-        for i in range(0, N_EV):
-            power_taken = global_cars[i].takePower(excess_power, day_of_week, hour_of_day)
-            power_taken_EV = power_taken_EV + power_taken
-            excess_power = excess_power + power_taken
-
-            # the storePower function returns for example -4, meaning 4 kwh has been stored, so update excess power
-            # on this
-            if abs(excess_power) < eps:  # if part of the cars were enough, not the whole list will be looked through
-                break
-        PEV_out = power_taken_EV
-        if abs(excess_power) > eps:  # this means that not all cars had enough energy
-            power_taken = global_hydrogen.takePower(excess_power)
-            excess_power = excess_power + power_taken
-            PH_out = power_taken
-        if abs(excess_power) > eps:
-            power_taken = -excess_power  # from grid
-            Pgrid_out = power_taken
-    EV_SoC_out = 0.0
-    for i in range(0, N_EV):
-        EV_SoC_out += global_cars[i].getSoC() / N_EV  # store the average SoC
-    H_SoC_out = global_hydrogen.getSoC()
-    Pgrid = np.around(Pgrid_out, 3)
-    PH = np.around(PH_out, 3)
-    PEV = np.around(PEV_out, 3)
-    EV_SoC = np.around(EV_SoC_out, 3)
-    excess_power = np.around(excess_power_out, 3)
-    H_SoC = np.around(H_SoC_out, 3)
-    EV_load = np.around(EV_load_out, 3)
-    data = {'power_grid': Pgrid.tolist(), 'power_EV': PEV.tolist(), 'power_hydrogen': PH.tolist(),
-            'EV_SoC': EV_SoC.tolist(), 'excess_power': excess_power.tolist(), 'H_SoC': H_SoC.tolist(),
-            'EV_load': EV_load.tolist(), 'hour': hour}
     return data
 
 
@@ -369,10 +279,8 @@ if __name__ == '__main__':
     ax2.plot(time, H_SoC, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    # plt.legend()
     plt.grid(axis='both')
     plt.title('Power flow and SoC of the hydrogen tank')
-    # plt.gca().set_ylim(bottom=0)
     plt.xticks(np.arange(0, 25, step=1))
     plt.xlim(0, 23)
     plt.savefig('hydrogenextreme.png', bbox_inches='tight')
@@ -392,10 +300,10 @@ if __name__ == '__main__':
     ax2.plot(time, EV_SoC, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    # plt.legend()
+
     plt.grid(axis='both')
     plt.title('Power flow and SoC of the EV')
-    # plt.gca().set_ylim(bottom=0)
+
     plt.xticks(np.arange(0, 25, step=1))
     plt.xlim(0, 23)
     plt.savefig('EVextreme.png', bbox_inches='tight')
@@ -406,13 +314,10 @@ if __name__ == '__main__':
     plt.xlabel('Time (hour)')
     plt.grid(axis='both')
     plt.title('Power flow from the grid')
-    # plt.gca().set_ylim(bottom=0)
+
     plt.xticks(np.arange(0, 25, step=1))
     plt.xlim(0, 23)
     plt.savefig('gridextreme.png', bbox_inches='tight')
 
     plt.show()
     plt.close()
-
-    # actuator_powers = {'power_load':5, 'power_wind':10}
-    # a = power_battery_realtime(actuator_powers, 0)

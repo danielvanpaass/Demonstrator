@@ -19,7 +19,7 @@ temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['close_moun
 with open('wind.txt') as json_file:
     wind = json.load(json_file)
 wind = np.array(wind['wind'])
-wind = wind[23:-1] #the last day of previous year is still included in wind.txt
+wind = wind[23:-1]  # the last day of previous year is still included in wind.txt
 with open('solar30.txt') as json_file:
     solar30 = json.load(json_file)
 global_ir_30 = np.array(solar30['irradiance_diffuse']) + np.array(solar30['irradiance_direct'])
@@ -40,13 +40,10 @@ with open('load.txt') as json_file:
 load_saving = np.array(load['load_saving'])
 load_average = np.array(load['load_average'])
 
-"""Power calculation solar panel with ambient temp as operating temp"""
 # calculate temperature per solar panel for each tilt
 tcell30 = pvlib.temperature.sapm_cell(global_ir_30, temp, wind, **temp_params)
 tcell35 = pvlib.temperature.sapm_cell(global_ir_35, temp, wind, **temp_params)
 tcell40 = pvlib.temperature.sapm_cell(global_ir_40, temp, wind, **temp_params)
-
-"""Main function to be called in this file, for total power out in a year per hour"""
 
 
 def power_out_wind(type_turbine, N_wind):
@@ -82,15 +79,12 @@ def power_out_load(N_load, type_load):
     tot_load = load * N_load
     tot_load = np.around(tot_load.astype(np.float), 3)
     data = {'power_load': tot_load.tolist()}
-
     return json.dumps(data)
 
 
 if __name__ == '__main__':
-
     cel2 = power_out_load(1, 'saving')
     cel2 = json.loads(cel2)['power_load'][0:24]
-
 
     cel1 = power_out_load(1, 'average')
     cel1 = json.loads(cel1)['power_load'][0:24]

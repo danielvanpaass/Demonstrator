@@ -1,4 +1,4 @@
-"Wind model modelled by cubic function based on data sheet values"
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -18,6 +18,7 @@ WIND_PARAMETERS = {
 
 # calculated wind power in KW
 def power_calc_wind(wind_speed, turbine_type):
+    """"Model wind turbine by cubic function based on data sheet values"""
     selected_turbine = WIND_PARAMETERS[turbine_type]
 
     wind_speed = np.array(wind_speed)
