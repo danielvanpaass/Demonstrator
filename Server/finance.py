@@ -147,3 +147,11 @@ paybacktime()
 #
 #
 # #fig.show()
+
+# ('With', [(sumPositiveInts(g_o[:744])*0.22+sumNegativeInts(g_o[:744])*0.06), (sumPositiveInts(g_o[745:1416])*0.22+sumNegativeInts(g_o[745:1416])*0.06),
+        #           (sumPositiveInts(g_o[1417:2161])*0.22+sumNegativeInts(g_o[1417:2161])*0.06), (sumPositiveInts(g_o[2161:2881])*0.22+sumNegativeInts(g_o[2161:2881])*0.06),
+        #           (sumPositiveInts(g_o[2881:3625])*0.22+sumNegativeInts(g_o[2881:3625])*0.06), (sumPositiveInts(g_o[3625:4345])*0.22+sumNegativeInts(g_o[3625:4345])*0.06),
+        #           (sumPositiveInts(g_o[4345:5089])*0.22+sumNegativeInts(g_o[4345:5089])*0.06), (sumPositiveInts(g_o[5089:5833])*0.22+sumNegativeInts(g_o[5089:5833])*0.06),
+        #           (sumPositiveInts(g_o[5833:6553])*0.22+sumNegativeInts(g_o[5833:6553])*0.06), (sumPositiveInts(g_o[6553:7297])*0.22+sumNegativeInts(g_o[6553:7297])*0.06),
+        #           (sumPositiveInts(g_o[7297:8017]) * 0.22 + sumNegativeInts(g_o[7297:8017]) * 0.06), (sumPositiveInts(g_o[8017:])*0.22+sumNegativeInts(g_o[8017:])*0.06),
+        #           (sumPositiveInts(g_o)*0.22+sumNegativeInts(g_o)*0.06)]),

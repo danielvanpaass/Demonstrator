@@ -418,7 +418,7 @@ def update_graph_live_emission(n,type,number,typewind,numberwind,H,EV):
     WIND_EMISSIONS = {
         'Aeolos10': {'P_rated': 10000, 'GHG': 0.000047,},
         'Hummer60': {'P_rated': 60000, 'GHG': 0.000047,},
-        'Vestas V90 2MW': {'P_rated': 2000000, 'GHG': 7.2,}
+        'Vestas V90 2MW': {'P_rated': 2000000, 'GHG': 0.0000093,}
     }
     PV_EMISSIONS = {
         'Mono': {'watt_peak': 245, 'GHG': 0.00004702,},
@@ -452,10 +452,10 @@ def update_graph_live_emission(n,type,number,typewind,numberwind,H,EV):
     sources = ['Solar', 'Wind', ' Hydrogen Battery', 'EV Battery','Natural Gas', 'Coal', 'Oil', 'Nuclear']
 
     fig = go.Figure(data=[
-        go.Bar(name='CO2', x=sources, y=[pv_carbon*0.81, wind_carbon*0.81, tot_h*0.81, tot_ev*0.81, tot_gas*0.81, tot_coal*0.81, tot_oil*0.81, tot_nuclear*0.81],marker_color='#323131' ),
-        go.Bar(name='Methane', x=sources, y=[pv_carbon*0.1, wind_carbon*0.1, tot_h*0.1, tot_ev*0.1, tot_gas*0.1, tot_coal*0.1, tot_oil*0.1, tot_nuclear*0.1],marker_color='#13AC24' ),
-        go.Bar(name='Nitrous Oxide', x=sources, y=[pv_carbon * 0.07, wind_carbon * 0.07, tot_h * 0.07, tot_ev * 0.07, tot_gas * 0.07, tot_coal * 0.07, tot_oil * 0.07, tot_nuclear * 0.07], marker_color='#1995F0'),
-        go.Bar(name='Fluorinated Gases', x=sources, y=[pv_carbon * 0.03, wind_carbon * 0.03, tot_h * 0.03, tot_ev * 0.03, tot_gas * 0.03, tot_coal * 0.03, tot_oil * 0.03, tot_nuclear * 0.03], marker_color='#EAF019')
+        go.Bar(name='CO2', x=sources, y=[pv_carbon*0.836, wind_carbon*0.941, tot_h*0.81, tot_ev*0.81, tot_gas*0.9375, tot_coal*0.81, tot_oil*0.81, tot_nuclear*0.651], ),
+        go.Bar(name='Methane', x=sources, y=[pv_carbon*0.112, wind_carbon*0.002, tot_h*0.1, tot_ev*0.1, tot_gas*0.0023, tot_coal*0.1, tot_oil*0.1, tot_nuclear*0.0007], ),
+        go.Bar(name='Nitrous Oxide', x=sources, y=[pv_carbon * 0.0495, wind_carbon * 0.005, tot_h * 0.07, tot_ev * 0.07, tot_gas * 0.001125, tot_coal * 0.07, tot_oil * 0.07, tot_nuclear * 0.0007], ),
+        go.Bar(name='Fluorinated Gases & rest', x=sources, y=[pv_carbon * 0.0025, wind_carbon * 0.0583, tot_h * 0.03, tot_ev * 0.03, tot_gas * 0.0591, tot_coal * 0.03, tot_oil * 0.03, tot_nuclear * 0.0346], )
     ])
     fig.update_layout(
         title="Life cycle emission",
@@ -485,9 +485,9 @@ lcoe_cache = 0
 def update_graph_live_lcoe(n,type,number,typewind,numberwind,H,EV):
     global lcoe_cache
     WIND_FINANCE = {
-        'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
-        'Hummer60': {'P_rated': 60000, 'investment_cost': 73680.00, 'OM per KWh': 0.02},
-        'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per KWh': 0.02}
+        'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per year': 466.27},
+        'Hummer60': {'P_rated': 60000, 'investment_cost': 106860.00, 'OM per year': 2137.20},
+        'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per year': 49120}
     }
     PV_FINANCE = {
         'Mono residential': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 1.65, 'OM': 12.43},
@@ -529,17 +529,27 @@ def update_graph_live_lcoe(n,type,number,typewind,numberwind,H,EV):
         dw = WIND_FINANCE['Hummer60']
     turbine_cost= numberwind * dw['investment_cost']
     discountrate_decay_wind = 0.112
-    cashflowwind = [dw['OM per KWh'] * sum(dh['power_solar'])] * 20
+    cashflowwind = [dw['OM per year']] * 20
     yearlyyieldwind = [sum(dh['power_wind'])]*20
     netpresentwind = npf.npv(discountRate, cashflowwind)
     totalyieldwind = npf.npv(discountrate_decay_wind, yearlyyieldwind)
     lcoe_w = ((turbine_cost + netpresentwind) / totalyieldwind).round(3)
-    bat_cost=H*2000 + EV*5000
-    bat_cap=H*396 + EV*56
-    lcoe_s = round(((bat_cost) / bat_cap),2)
+    bat_cost = EV * (57 + 3000)
+    bat_cap = EV*56*308
+    bat_cost_h = H * (78048 + 48000)
+    bat_cap_h = H * 396 * 5000
+    lcoe_sev = round(((bat_cost) / bat_cap),2)
+    lcoe_seh = round(((bat_cost_h) / bat_cap_h), 2)
     fig = go.Figure(data=[
-        go.Bar(name='LCOE', x=['pv', 'wind', 'storage'], y=[lcoe_pv, lcoe_w, lcoe_s/1000], marker_color='#00A6D6', )
+        go.Bar(name='LCOE', x=['pv', 'wind', 'Lithium Ion', 'Hydrogen'], y=[lcoe_pv, lcoe_w, lcoe_sev, lcoe_seh], marker_color='#00A6D6', )
     ])
+    fig.update_layout(
+        title="LCOE for renewable generation and storage",
+        height=600,
+        xaxis_title="Generation source",
+        yaxis_title="€ / kWh",
+    )
+
     # fig = make_subplots(rows=1, cols=2, specs=[[{"type": "bar"}, {"type": "bar"}]])
     # fig.add_trace(go.Bar(
     #     y=[lcoe_pv,lcoe_w],
@@ -575,13 +585,16 @@ pay_cache = 0
               [Input('interval-component', 'n_intervals',)],state=[State('dropdownpvtype', 'value'),
                                                                    State('input', 'value'),
                                                                    State('dropdownwind', 'value'),
-                                                                   State('inputwind', 'value'),],)
-def update_graph_live_pay(n,type,number,typewind,numberwind):
+                                                                   State('inputwind', 'value'),
+                                                                   State('input H', 'value'),
+                                                                   State('input EV', 'value'),
+                                                                   ],)
+def update_graph_live_pay(n,type,number,typewind,numberwind,H,EV):
     global pay_cache
     WIND_FINANCE = {
-        'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per KWh': 0.02},
-        'Hummer60': {'P_rated': 60000, 'investment_cost': 73680.00, 'OM per KWh': 0.02},
-        'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per KWh': 0.02}
+        'Aeolos10': {'P_rated': 10000, 'investment_cost': 23313.40, 'OM per year': 466.27},
+        'Hummer60': {'P_rated': 60000, 'investment_cost': 106860.00, 'OM per year': 2137.20},
+        'Vestas V90 2MW': {'P_rated': 2000000, 'investment_cost': 2456000, 'OM per year': 49120}
     }
     PV_FINANCE = {
         'Mono residential': {'watt_peak': 245, 'price': 164.46, 'yearly_decay': 0.0939, 'bos': 1.65, 'OM': 12.43},
@@ -611,19 +624,24 @@ def update_graph_live_pay(n,type,number,typewind,numberwind):
     inverter_cost = roundup(number) * 0.2 * 505.74
     Initialcost_pv = (number * dpv['price'] + (inverter_cost + dpv['watt_peak'] * dpv['bos'])/0.9)
     Initialcost_wind= (numberwind * dw['investment_cost'])
-    total_investment= Initialcost_wind + Initialcost_pv
+    bat_cost_h = H * (78048 + 48000)
+    bat_cost = EV * (57 + 3000)
+    total_investment= Initialcost_wind + Initialcost_pv +bat_cost_h + bat_cost
     pos_net = sumPositiveInts(dh['power_grid'])
     neg_net = sumNegativeInts(dh['power_grid'])
-
     yearly_savings = (sum(dh['power_load'])*0.22 - pos_net*0.22 + neg_net*0.06)
     paytime= total_investment/(0.1+yearly_savings)
-    paytimes=round(paytime,2)
+    if paytime > 0:
+        paytimes=round(paytime,2)
+    else:
+        paytimes= '(not reached)'
+    total_investments=round(total_investment,2)
     global pay_cache
     if pay_cache != paytime:
         pay_cache = paytime
     else:
         raise PreventUpdate
-    return 'The payback time is expected to be {} years'.format(paytimes)
+    return 'The payback time is expected to be {} years with a total investment cost of €{} '.format(paytimes,total_investments)
 #-------------------Table---------------------------------------------------------------
 table_cache = 0
 
@@ -661,10 +679,13 @@ def update_graph_live_table(n):
                 sum(l_o[2881:3625])*0.22, sum(l_o[3625:4345])*0.22, sum(l_o[4345:5089])*0.22, sum(l_o[5089:5833])*0.22,
                 sum(l_o[5833:6553])*0.22, sum(l_o[6553:7297])*0.22, sum(l_o[7297:8017])*0.22, sum(l_o[8017:8761])*0.22,
                 sum(l_o)*0.22]),
-        ('With', [(sum(g_o[:744])*0.22), sum(g_o[745:1416])*0.22, sum(g_o[1417:2161])*0.22, sum(g_o[2161:2881])*0.22,
-                sum(g_o[2881:3625])*0.22, sum(g_o[3625:4345])*0.22, sum(g_o[4345:5089])*0.22, sum(g_o[5089:5833])*0.22,
-                sum(g_o[5833:6553])*0.22, sum(g_o[6553:7297])*0.22, sum(g_o[7297:8017])*0.22, sum(g_o[8017:8761])*0.22,
-                sum(g_o)*0.22]),
+        ('With',
+         [(sum(g_o[:744]) * 0.22), sum(g_o[745:1416]) * 0.22, sum(g_o[1417:2161]) * 0.22, sum(g_o[2161:2881]) * 0.22,
+          sum(g_o[2881:3625]) * 0.22, sum(g_o[3625:4345]) * 0.22, sum(g_o[4345:5089]) * 0.22,
+          sum(g_o[5089:5833]) * 0.22,
+          sum(g_o[5833:6553]) * 0.22, sum(g_o[6553:7297]) * 0.22, sum(g_o[7297:8017]) * 0.22,
+          sum(g_o[8017:8761]) * 0.22,
+          sum(g_o) * 0.22]),
     ]))
     table = dash_table.DataTable(
         id='typing_formatting_1',
