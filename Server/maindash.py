@@ -141,6 +141,9 @@ app.layout = html.Div(children=[
     dcc.Graph(id='gridpower', ),
     dcc.Graph(id='piechart', ),
     #dcc.Graph(id='piechartshare', animate=False,)
+        html.H3('Total Emissions',
+                style={'color': colors['text']}),
+        html.Div(id='emtot'),
     dcc.Graph(id='emission',),
     dcc.Graph(id='lcoe',),
     html.H3('payback time [years]',
@@ -401,6 +404,8 @@ def update_graph_live_pie(n):
         raise PreventUpdate
     return fig
 
+
+
 #-------------------emissions figure---------------------------------------------------------------
 em_cache = 0
 
@@ -442,8 +447,8 @@ def update_graph_live_emission(n,type,number,typewind,numberwind,H,EV):
     pv_carbon = round(tot_pv*ghgpv,4)
     tot_wind = sum(dh['power_wind']) + tot_net* 0.08
     wind_carbon = round(tot_wind * ghgwind,4)
-    tot_h=H*0.007485
-    tot_ev=EV*0.327
+    tot_h=H *0.007485
+    tot_ev=EV*0.0327
     tot_gas = (tot_net * 0.45)*0.000499
     tot_coal = (tot_net * 0.32)*0.000888
     tot_oil = (tot_net * 0.04)*0.000733
@@ -471,7 +476,62 @@ def update_graph_live_emission(n,type,number,typewind,numberwind,H,EV):
     return fig
 
 
+emt_cache = 0
 
+@app.callback(Output('emtot', 'children'),
+              [Input('interval-component', 'n_intervals')],state=[State('dropdownpvtype', 'value'),
+                                                                   State('input', 'value'),
+                                                                   State('dropdownwind', 'value'),
+                                                                   State('inputwind', 'value'),
+                                                                   State('input H', 'value'),
+                                                                   State('input EV', 'value'),
+                                                                  ],)
+def update_graph_live_emission(n,type,number,typewind,numberwind,H,EV):
+    global emt_cache
+
+    WIND_EMISSIONS = {
+        'Aeolos10': {'P_rated': 10000, 'GHG': 0.000047,},
+        'Hummer60': {'P_rated': 60000, 'GHG': 0.000047,},
+        'Vestas V90 2MW': {'P_rated': 2000000, 'GHG': 0.0000093,}
+    }
+    PV_EMISSIONS = {
+        'Mono': {'watt_peak': 245, 'GHG': 0.00004702,},
+        'Poly': {'watt_peak': 295, 'GHG': 0.00005155,}
+    }
+    if type == 'HIT-N245SE10':
+        dpv = PV_EMISSIONS['Mono']
+    else:
+        dpv = PV_EMISSIONS['Poly']
+    if typewind == 'Aeolos10':
+        dwe= WIND_EMISSIONS['Aeolos10']
+    elif typewind == 'V90-2MW':
+        dwe = WIND_EMISSIONS['Vestas V90 2MW']
+    elif typewind == 'Hummer60':
+        dwe = WIND_EMISSIONS['Hummer60']
+
+    ghgwind=dwe['GHG']
+    ghgpv = dpv['GHG']
+    tot_net = sumPositiveInts(dh['power_grid'])
+    tot_pv = sum(dh['power_solar']) + tot_net * 0.05
+    pv_carbon = round(tot_pv*ghgpv,4)
+    tot_wind = sum(dh['power_wind']) + tot_net* 0.08
+    wind_carbon = round(tot_wind * ghgwind,4)
+    tot_h=H *0.007485
+    tot_ev=EV*0.0327
+    tot_gas = (tot_net * 0.45)*0.000499
+    tot_coal = (tot_net * 0.32)*0.000888
+    tot_oil = (tot_net * 0.04)*0.000733
+    tot_nuclear = (tot_net * 0.03)*0.00029
+    tot_other = tot_net * 0.03
+    tot_em=round(pv_carbon+wind_carbon +tot_h +tot_ev +tot_gas+tot_coal+tot_oil+tot_oil+tot_nuclear+tot_other,3)
+
+
+    global emt_cache
+    if emt_cache != tot_em:
+        emt_cache = tot_em
+    else:
+        raise PreventUpdate
+    return 'The total amount of greenhouse gas emitted is {} tonnes C02 equivalent (1 tonne = 1000kg)'.format(tot_em)
 #-------------------lcoe---------------------------------------------------------------
 lcoe_cache = 0
 
