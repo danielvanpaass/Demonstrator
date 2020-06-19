@@ -5,12 +5,7 @@ from Client import __USEPINS__
 # When running this script from the top directory, run this with -m:
 # python3 -m Client.tests.test_hhub
 
-bytes = [0x40,0x04]
-hex_bytes = ["0x%02x" % n for n in bytes]
-print(hex_bytes)
-
 # Make sure __USEPINS__ is set correctly
-
 print("test_hhub.py: __USEPINS__ is set to ", __USEPINS__)
 print("__________________________________________\n")
 
