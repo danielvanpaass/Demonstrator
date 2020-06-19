@@ -5,16 +5,29 @@ from Client import __USEPINS__
 # When running this script from the top directory, run this with -m:
 # python3 -m Client.tests.test_hhub
 
+bytes = [0x40,0x04]
+hex_bytes = ["0x%02x" % n for n in bytes]
+print(hex_bytes)
+
 # Make sure __USEPINS__ is set correctly
 
 print("test_hhub.py: __USEPINS__ is set to ", __USEPINS__)
-print("__________________________________________")
+print("__________________________________________\n")
 
-# Try to detect I2C devices
-print("hhub.getConnected returns ", hhub.getConnected(1))
+# Startup the hardware hub
+modelList = hhub.startup()
 
-# Try to set value for solarpv
-print("hhub.setModel returns ", hhub.setModel(2e6, hhub.Model.SOLARPV, 0e6, 6e6))
+# Get a list of connected devices
+hhub.update(modelList)
+print("\nmodelList = {}\n".format(modelList))
 
-# Try to retrieve value from solarpv
-print("hhub.getModel returns ", hhub.getModel(hhub.Model.SOLARPV, 0e6, 6e6))
+# Actuate only solar PV
+modelList[0].actuate(0.75) # SolarPV is at id 1
+
+# Get sensor value from solar PV as fraction between 0 and 1
+new_power = modelList[0].sense() # Same as above if solarPV is at place 1
+print("\nmodelList[0].sense() = {}\n".format(new_power))
+
+# Set LED lights in ElectricVehicle and get amount
+modelList[3].actuate(0.75)
+print("\nAmount of EVs = {}\n".format(modelList[3].get_amount()))

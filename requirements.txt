@@ -8,4 +8,5 @@ plotly
 dash
 #=======
 smbus
+smbus2
 RPi.GPIO
