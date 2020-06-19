@@ -139,12 +139,16 @@ app.layout = html.Div(children=[
     dcc.Graph(id='EVpower', ),
     dcc.Graph(id='Hydrogen', ),
     dcc.Graph(id='gridpower', ),
+    html.H3('Electricty mix in 2019',
+            style={'color': colors['text']}),
     dcc.Graph(id='piechart', ),
     #dcc.Graph(id='piechartshare', animate=False,)
-        html.H3('Total Emissions',
-                style={'color': colors['text']}),
-        html.Div(id='emtot'),
+    html.H3('Total Emissions in 2019',
+            style={'color': colors['text']}),
+    html.Div(id='emtot'),
     dcc.Graph(id='emission',),
+    html.H3('Levelized cost of energy',
+            style={'color': colors['text']}),
     dcc.Graph(id='lcoe',),
     html.H3('payback time [years]',
             style={'color': colors['text']}),
@@ -448,7 +452,7 @@ def update_graph_live_emission(n,type,number,typewind,numberwind,H,EV):
     tot_wind = sum(dh['power_wind']) + tot_net* 0.08
     wind_carbon = round(tot_wind * ghgwind,4)
     tot_h=H *0.007485
-    tot_ev=EV*0.0327
+    tot_ev=EV*0.001179
     tot_gas = (tot_net * 0.45)*0.000499
     tot_coal = (tot_net * 0.32)*0.000888
     tot_oil = (tot_net * 0.04)*0.000733
@@ -457,15 +461,15 @@ def update_graph_live_emission(n,type,number,typewind,numberwind,H,EV):
     sources = ['Solar', 'Wind', ' Hydrogen Battery', 'EV Battery','Natural Gas', 'Coal', 'Oil', 'Nuclear']
 
     fig = go.Figure(data=[
-        go.Bar(name='CO2', x=sources, y=[pv_carbon*0.836, wind_carbon*0.941, tot_h*0.81, tot_ev*0.81, tot_gas*0.9375, tot_coal*0.81, tot_oil*0.81, tot_nuclear*0.651], ),
-        go.Bar(name='Methane', x=sources, y=[pv_carbon*0.112, wind_carbon*0.002, tot_h*0.1, tot_ev*0.1, tot_gas*0.0023, tot_coal*0.1, tot_oil*0.1, tot_nuclear*0.0007], ),
-        go.Bar(name='Nitrous Oxide', x=sources, y=[pv_carbon * 0.0495, wind_carbon * 0.005, tot_h * 0.07, tot_ev * 0.07, tot_gas * 0.001125, tot_coal * 0.07, tot_oil * 0.07, tot_nuclear * 0.0007], ),
-        go.Bar(name='Fluorinated Gases & rest', x=sources, y=[pv_carbon * 0.0025, wind_carbon * 0.0583, tot_h * 0.03, tot_ev * 0.03, tot_gas * 0.0591, tot_coal * 0.03, tot_oil * 0.03, tot_nuclear * 0.0346], )
+        go.Bar(name='CO2', x=sources, y=[pv_carbon*0.836, wind_carbon*0.941, tot_h*0.81, tot_ev*0.81, tot_gas*0.9375, tot_coal*0.855, tot_oil*0.901, tot_nuclear*0.651], ),
+        go.Bar(name='Methane', x=sources, y=[pv_carbon*0.112, wind_carbon*0.002, tot_h*0.1, tot_ev*0.1, tot_gas*0.0023, tot_coal*0.063, tot_oil*0.091, tot_nuclear*0.0007], ),
+        go.Bar(name='Nitrous Oxide', x=sources, y=[pv_carbon * 0.0495, wind_carbon * 0.005, tot_h * 0.07, tot_ev * 0.07, tot_gas * 0.001125, tot_coal * 0.02, tot_oil * 0.0074, tot_nuclear * 0.0007], ),
+        go.Bar(name='Fluorinated Gases & rest', x=sources, y=[pv_carbon * 0.0025, wind_carbon * 0.0583, tot_h * 0.03, tot_ev * 0.03, tot_gas * 0.0591, tot_coal * 0.062, tot_oil * 0.0006, tot_nuclear * 0.0346], )
     ])
     fig.update_layout(
-        title="Life cycle emission",
+        title="Life cycle emission ",
         xaxis_title="Generation source",
-        yaxis_title="Tonne CO2 equivalent",
+        yaxis_title="Tonne CO2 equivalent (1 Tonne = 1000kg)",
         height=1000, barmode='stack'
     )
     global em_cache
@@ -523,7 +527,7 @@ def update_graph_live_emission(n,type,number,typewind,numberwind,H,EV):
     tot_oil = (tot_net * 0.04)*0.000733
     tot_nuclear = (tot_net * 0.03)*0.00029
     tot_other = tot_net * 0.03
-    tot_em=round(pv_carbon+wind_carbon +tot_h +tot_ev +tot_gas+tot_coal+tot_oil+tot_oil+tot_nuclear+tot_other,3)
+    tot_em=round(pv_carbon+wind_carbon +tot_h +tot_ev +tot_gas+tot_coal+tot_oil+tot_nuclear,3)
 
 
     global emt_cache
@@ -816,6 +820,11 @@ def update_graph_live_table(n):
             )
         },
         ],style_header={'backgroundColor': '#00A6D6'},
+        style_cell={
+            'font_family': 'normal',
+            'font_size': '26px',
+            'text_align': 'center'
+        },
         editable=True
     )
 
